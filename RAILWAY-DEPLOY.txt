@@ -22,16 +22,31 @@ STEP 2 — Redeploy
 Deployments → Redeploy (latest commit from license-server repo)
 Wait for SUCCESS.
 
-STEP 3 — Verify
+STEP 3 — PERSIST LICENSES (required — or they vanish on every deploy)
+---------------------------------------------------------------------
+Railway replaces the container on each deploy. SQLite in ./data/ is NOT kept.
+
+1. Railway → your license-server service → Volumes → Add Volume
+2. Mount path: /data
+3. Redeploy once (Railway sets RAILWAY_VOLUME_MOUNT_PATH=/data automatically)
+4. In Deploy logs you should see:
+     [license-db] /data/licenses.db
+     [license-db] Persistent volume: /data
+
+Optional variable (only if mount path is not /data):
+  DATABASE_PATH=/data/licenses.db
+
+After the volume exists, re-register machines ONCE. Future deploys keep the DB.
+
+STEP 4 — Verify
 ---------------
 https://license-server-production-751a.up.railway.app/
-  - Title: Licencias (v3)
-  - Text: Panel v3
+  - Panel v5 (add-ons, +6 / +1 año)
 
 https://license-server-production-751a.up.railway.app/health
-  - "panelVersion": 3
+  - "panelVersion": 5
 
-STEP 4 — Push updates from your PC (later)
+STEP 5 — Push updates from your PC (later)
 ------------------------------------------
 cd Documents\AdminPOS\license-server
 .\push-to-github.ps1

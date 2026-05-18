@@ -120,5 +120,17 @@ export async function openLicenseDb(dbPath = process.env.DATABASE_PATH ?? defaul
   `);
 
   console.log(`[license-db] ${resolved}`);
+
+  const onRailway = Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID);
+  const hasVolume = Boolean(process.env.RAILWAY_VOLUME_MOUNT_PATH);
+  if (onRailway && !hasVolume) {
+    console.warn(
+      "[license-db] WARNING: No Railway Volume detected. licenses.db lives on ephemeral disk — " +
+        "every redeploy wipes all licenses. Add a Volume in Railway (see RAILWAY-DEPLOY.txt)."
+    );
+  } else if (onRailway && hasVolume) {
+    console.log(`[license-db] Persistent volume: ${process.env.RAILWAY_VOLUME_MOUNT_PATH}`);
+  }
+
   return db;
 }
