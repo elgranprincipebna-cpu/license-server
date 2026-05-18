@@ -1,0 +1,28 @@
+{
+  "name": "license-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Central license server for MiniMarket POS clients",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "prebuild": "node -e \"const fs=require('fs');if(!fs.existsSync('src/index.ts')){console.error('\\nBUILD FAILED: src/ folder missing on server.\\nPush the full project with Git (run push-to-github.ps1), not the GitHub website file picker.\\n');process.exit(1)}\"",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "nanoid": "^5.0.9",
+    "sql.js": "^1.12.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
