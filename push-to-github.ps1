@@ -1,11 +1,10 @@
 # Run from license-server folder. Uploads the FULL folder tree to GitHub (including src/ and public/).
-# Usage (license-server only repo):
-#   .\push-to-github.ps1 -RepoUrl "https://github.com/elgranprincipebna-cpu/AdminPOS.git"
-# For full AdminPOS repo, run push-adminpos.ps1 from the project root instead.
+# Usage:
+#   .\push-to-github.ps1
+#   .\push-to-github.ps1 -RepoUrl "https://github.com/other/repo.git"
 
 param(
-  [Parameter(Mandatory = $true)]
-  [string]$RepoUrl
+  [string]$RepoUrl = "https://github.com/elgranprincipebna-cpu/license-server.git"
 )
 
 $ErrorActionPreference = "Stop"

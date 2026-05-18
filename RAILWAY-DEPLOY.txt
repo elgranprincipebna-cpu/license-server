@@ -1,53 +1,39 @@
-RAILWAY UPDATE CHECKLIST
-========================
+RAILWAY — connect to NEW repo
+==============================
 
-Your PC has panel v3. Railway is still OLD because GitHub did not get the new files yet.
+GitHub repo (correct):
+  https://github.com/elgranprincipebna-cpu/license-server
 
-STEP 1 — Push to GitHub (GitHub Desktop)
-----------------------------------------
-1. Open GitHub Desktop
-2. Repository: AdminPOS (folder: Documents\AdminPOS)
-3. You MUST see changed files including:
-   license-server/public/index.html
-   license-server/src/index.ts
-   license-server/package.json
-   license-server/scripts/copy-public.mjs
-4. Summary: Fix license panel v3
-5. Commit to main
-6. Push origin (top bar "Push origin" or Repository → Push)
+GitHub already has panel v3 (public/index.html).
 
-STEP 2 — Verify on github.com (IMPORTANT)
------------------------------------------
-Open in browser:
-https://github.com/elgranprincipebna-cpu/AdminPOS/tree/main/license-server/public
+Railway must use THIS repo (not AdminPOS).
 
-You must see index.html. Click it — search for "Panel v3" or "fetchJson".
-If folder missing or old text → push did not work. Repeat Step 1.
+STEP 1 — Reconnect Railway to the new repo
+------------------------------------------
+1. railway.app → your project → license-server service
+2. Settings → Source (or Connect)
+3. Change repository to: elgranprincipebna-cpu/license-server
+4. Branch: main
+5. Root Directory: leave EMPTY (repo root IS license-server)
+6. Save
 
-STEP 3 — Railway settings
--------------------------
-railway.app → your project → license-server service → Settings:
+STEP 2 — Redeploy
+-----------------
+Deployments → Redeploy (latest commit from license-server repo)
+Wait for SUCCESS.
 
-  Root Directory:  license-server
-  Branch:          main
+STEP 3 — Verify
+---------------
+https://license-server-production-751a.up.railway.app/
+  - Title: Licencias (v3)
+  - Text: Panel v3
 
-Save if you changed anything.
+https://license-server-production-751a.up.railway.app/health
+  - "panelVersion": 3
 
-STEP 4 — Force redeploy
------------------------
-Deployments tab → ⋮ menu on latest → Redeploy
-OR click "Deploy" / "Redeploy" button.
+STEP 4 — Push updates from your PC (later)
+------------------------------------------
+cd Documents\AdminPOS\license-server
+.\push-to-github.ps1
 
-Wait until status: SUCCESS (green).
-
-STEP 5 — Confirm live site
---------------------------
-Open: https://license-server-production-2c54.up.railway.app/
-
-Browser tab title must say:  Licencias (v3)
-Page must say:               Panel v3
-
-Health: https://license-server-production-2c54.up.railway.app/health
-Must show: "panelVersion": 3
-
-If still old → Railway is not pulling from GitHub. Check Step 3 Root Directory.
+(No need to pass URL — default is license-server.git)

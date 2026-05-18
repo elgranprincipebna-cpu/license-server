@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <title>MiniMarket — Licencias (v3)</title>
+    <title>MiniMarket — Licencias (v4)</title>
     <style>
       :root {
         font-family: system-ui, Segoe UI, sans-serif;
@@ -127,12 +127,43 @@
       #gate {
         max-width: 420px;
       }
+      .badge {
+        display: inline-block;
+        margin-top: 4px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .badge.ok {
+        background: #ecfdf5;
+        color: #047857;
+      }
+      .badge.soon {
+        background: #fffbeb;
+        color: #b45309;
+      }
+      .badge.expired {
+        background: #fef2f2;
+        color: #b91c1c;
+      }
+      .expiry-date {
+        font-size: 0.8rem;
+        color: #52525b;
+      }
+      tr.row-expired td {
+        background: #fef2f2;
+      }
+      tr.row-soon td {
+        background: #fffbeb;
+      }
     </style>
   </head>
   <body>
     <h1>Licencias MiniMarket POS</h1>
     <p class="sub">
-      Panel v3 — API: <span class="mono" id="apiBase"></span>
+      Panel v4 — API: <span class="mono" id="apiBase"></span>
     </p>
 
     <div id="gate" class="card">
@@ -176,6 +207,7 @@
                 <th>Machine ID</th>
                 <th>Clave</th>
                 <th>Vence</th>
+                <th>Estado</th>
                 <th></th>
               </tr>
             </thead>
@@ -250,6 +282,58 @@
           return new Date(dateStr + "T23:59:59.000Z").toISOString();
         }
 
+        function escapeHtml(s) {
+          return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        /** Days until end of expiry calendar day (local). */
+        function expiryStatus(iso) {
+          const end = new Date(iso);
+          if (Number.isNaN(end.getTime())) {
+            return { days: null, label: "Fecha invalida", cls: "expired", dateStr: "—" };
+          }
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const endDay = new Date(end);
+          endDay.setHours(0, 0, 0, 0);
+          const days = Math.round((endDay.getTime() - today.getTime()) / 86400000);
+          const dateStr = end.toLocaleDateString("es-VE", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          });
+          if (days < 0) {
+            const n = Math.abs(days);
+            return {
+              days,
+              label: "Vencida hace " + n + (n === 1 ? " día" : " días"),
+              cls: "expired",
+              dateStr,
+            };
+          }
+          if (days === 0) {
+            return { days, label: "Vence hoy", cls: "soon", dateStr };
+          }
+          if (days <= 30) {
+            return {
+              days,
+              label: days + (days === 1 ? " día restante" : " días restantes"),
+              cls: "soon",
+              dateStr,
+            };
+          }
+          return {
+            days,
+            label: days + " días restantes",
+            cls: "ok",
+            dateStr,
+          };
+        }
+
         function showApp(loggedIn) {
           gate.style.display = loggedIn ? "none" : "block";
           app.style.display = loggedIn ? "block" : "none";
@@ -270,28 +354,47 @@
               return;
             }
             tbody.innerHTML = "";
+            let active = 0;
+            let expired = 0;
             for (const row of data.licenses || []) {
               const tr = document.createElement("tr");
               const exp = String(row.expires_at).slice(0, 10);
+              const st = expiryStatus(row.expires_at);
+              if (st.days !== null && st.days < 0) expired++;
+              else active++;
+              if (st.cls === "expired") tr.className = "row-expired";
+              else if (st.cls === "soon") tr.className = "row-soon";
               tr.innerHTML =
                 "<td>" +
-                (row.label || "—") +
+                escapeHtml(row.label || "—") +
                 "</td><td class=\"mono\">" +
-                row.machine_id +
+                escapeHtml(row.machine_id) +
                 "</td><td class=\"mono\">" +
-                row.license_key +
-                '</td><td><input type="date" data-id="' +
-                row.id +
+                escapeHtml(row.license_key) +
+                '</td><td><div class="expiry-date">' +
+                escapeHtml(st.dateStr) +
+                '</div><input type="date" data-id="' +
+                escapeHtml(row.id) +
                 '" value="' +
-                exp +
-                '" style="margin:0;width:auto" /></td><td class="row-actions">' +
+                escapeHtml(exp) +
+                '" style="margin:4px 0 0;width:auto" title="Cambiar vencimiento" /></td><td><span class="badge ' +
+                st.cls +
+                '">' +
+                escapeHtml(st.label) +
+                '</span></td><td class="row-actions">' +
                 '<button type="button" class="btn-ghost" data-save="' +
-                row.id +
+                escapeHtml(row.id) +
                 '">Guardar</button> ' +
                 '<button type="button" class="btn-ghost" data-del="' +
-                row.id +
+                escapeHtml(row.id) +
                 '">Eliminar</button></td>';
               tbody.appendChild(tr);
+            }
+            if ((data.licenses || []).length > 0) {
+              showMsg(
+                active + " activa(s), " + expired + " vencida(s) — " + (data.licenses || []).length + " total.",
+                true
+              );
             }
             tbody.querySelectorAll("[data-save]").forEach(function (btn) {
               btn.onclick = async function () {
@@ -355,8 +458,15 @@
               }),
             });
             if (!res.ok) throw new Error(data.error || res.statusText);
+            const createdExpiry = expiryStatus(data.expiresAt);
             document.getElementById("createdKey").textContent =
-              "Licencia creada. Clave opcional: " + data.licenseKey;
+              "Licencia creada. Clave opcional: " +
+              data.licenseKey +
+              " — Vence: " +
+              createdExpiry.dateStr +
+              " (" +
+              createdExpiry.label +
+              ")";
             showMsg("Licencia registrada.", true);
             document.getElementById("machineId").value = "";
             await load();
