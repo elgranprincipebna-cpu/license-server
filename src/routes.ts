@@ -104,7 +104,7 @@ export function createRoutes(db: LicenseDb, panelVersion = 1, dbMeta?: LicenseDb
     const persistent = dbMeta?.persistent ?? true;
     res.json({
       ok: true,
-      service: "minimarket-license-server",
+      service: "adminpos-license-server",
       panelVersion,
       storage: {
         persistent,

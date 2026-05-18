@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Central license server for MiniMarket POS clients",
+  "description": "Central license server for AdminPOS clients",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "prebuild": "node -e \"const fs=require('fs');if(!fs.existsSync('src/index.ts')){console.error('BUILD FAILED: src/ missing');process.exit(1)}\"",
