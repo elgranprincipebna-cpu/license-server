@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>MiniMarket — Licencias</title>
+    <!-- v2: fixed admin API routes -->
     <style>
       :root {
         font-family: system-ui, Segoe UI, sans-serif;
@@ -195,14 +196,37 @@
       function setKey(k) {
         sessionStorage.setItem(KEY_STORAGE, k);
       }
+      const API = window.location.origin;
+
       function authHeaders() {
         return {
+          Accept: "application/json",
           "Content-Type": "application/json",
           Authorization: "Bearer " + getKey(),
         };
       }
+
+      async function apiFetch(path, init) {
+        const res = await fetch(API + path, init);
+        return res;
+      }
       function showMsg(text, ok) {
         msg.innerHTML = text ? `<div class="${ok ? "ok" : "error"}">${text}</div>` : "";
+      }
+      async function readJson(res) {
+        const text = await res.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          const preview = text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
+          throw new Error(
+            res.status === 401
+              ? "Clave incorrecta. Use exactamente ADMIN_API_KEY de Railway (Variables)."
+              : res.status === 503
+                ? "ADMIN_API_KEY no configurada en Railway. Agreguela en Variables y redeploy."
+                : `Respuesta no valida (${res.status}): ${preview || "HTML en lugar de JSON"}`
+          );
+        }
       }
       function toIsoEndOfDay(dateStr) {
         return new Date(dateStr + "T23:59:59.000Z").toISOString();
@@ -226,13 +250,15 @@
       async function load() {
         showMsg("");
         try {
-          const res = await fetch("/admin/licenses", { headers: authHeaders() });
+          const res = await apiFetch("/admin/licenses", { headers: authHeaders() });
+          const data = await readJson(res);
           if (res.status === 401) {
             setKey("");
-            location.reload();
+            showMsg(data.error || "Clave incorrecta. Vuelva a ingresar ADMIN_API_KEY.", false);
+            gate.style.display = "block";
+            app.style.display = "none";
             return;
           }
-          const data = await res.json();
           tbody.innerHTML = "";
           for (const row of data.licenses || []) {
             const tr = document.createElement("tr");
@@ -253,12 +279,13 @@
               const id = btn.getAttribute("data-save");
               const input = tbody.querySelector(`input[data-id="${id}"]`);
               try {
-                const r = await fetch("/admin/licenses/" + id, {
+                const r = await apiFetch("/admin/licenses/" + id, {
                   method: "PATCH",
                   headers: authHeaders(),
                   body: JSON.stringify({ expiresAt: toIsoEndOfDay(input.value) }),
                 });
-                if (!r.ok) throw new Error((await r.json()).error || r.statusText);
+                const patchData = await readJson(r);
+                if (!r.ok) throw new Error(patchData.error || r.statusText);
                 showMsg("Fecha actualizada.", true);
                 void load();
               } catch (e) {
@@ -270,7 +297,7 @@
             btn.onclick = async () => {
               if (!confirm("¿Eliminar esta licencia? El POS dejará de funcionar.")) return;
               const id = btn.getAttribute("data-del");
-              await fetch("/admin/licenses/" + id, { method: "DELETE", headers: authHeaders() });
+              await apiFetch("/admin/licenses/" + id, { method: "DELETE", headers: authHeaders() });
               void load();
             };
           });
@@ -290,7 +317,7 @@
           return;
         }
         try {
-          const res = await fetch("/admin/licenses", {
+          const res = await apiFetch("/admin/licenses", {
             method: "POST",
             headers: authHeaders(),
             body: JSON.stringify({
@@ -299,7 +326,7 @@
               expiresAt: toIsoEndOfDay(expiresDate.value),
             }),
           });
-          const data = await res.json();
+          const data = await readJson(res);
           if (!res.ok) throw new Error(data.error || res.statusText);
           document.getElementById("createdKey").textContent =
             "Licencia creada. Clave (opcional en POS): " + data.licenseKey;

@@ -8,7 +8,7 @@ export const requireAdmin: RequestHandler = (req, res, next) => {
   const auth = req.header("authorization") ?? "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
   if (token !== key) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Unauthorized", hint: "Use the same value as ADMIN_API_KEY in Railway Variables." });
   }
   next();
 };

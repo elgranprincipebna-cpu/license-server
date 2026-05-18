@@ -13,33 +13,30 @@ const app = express();
 app.use(express.json({ limit: "64kb" }));
 
 const corsOrigin = process.env.CORS_ORIGIN ?? "*";
-const allowedOrigins =
-  corsOrigin === "*"
-    ? true
-    : corsOrigin.split(",").map((s) => s.trim());
 app.use(
   cors({
-    origin: (origin, cb) => {
-      if (!origin || allowedOrigins === true) return cb(null, true);
-      if (Array.isArray(allowedOrigins) && allowedOrigins.includes(origin)) return cb(null, true);
-      // Dev: allow any localhost port (Vite may use 5173, 5174, etc.)
-      if (process.env.NODE_ENV !== "production" && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
-        return cb(null, true);
-      }
-      cb(new Error(`CORS blocked: ${origin}`));
-    },
+    origin: corsOrigin === "*" ? true : corsOrigin.split(",").map((s) => s.trim()),
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
   })
 );
 
 const publicDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "public");
-app.use(express.static(publicDir));
+const indexHtml = path.join(publicDir, "index.html");
 
 const db = await openLicenseDb();
 app.use(createRoutes(db));
 
+// Only serve the admin UI on /. Do NOT use express.static (it can return HTML for /admin/* on some hosts).
 app.get("/", (_req, res) => {
-  res.sendFile(path.join(publicDir, "index.html"));
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.sendFile(indexHtml);
+});
+
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error("[license-server]", err);
+  if (!res.headersSent) {
+    res.status(500).json({ error: err instanceof Error ? err.message : "Internal server error" });
+  }
 });
 
 const port = Number(process.env.PORT ?? 8790);
