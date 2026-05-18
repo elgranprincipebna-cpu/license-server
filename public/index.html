@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <title>MiniMarket — Licencias (v4)</title>
+    <title>MiniMarket — Licencias (v5)</title>
     <style>
       :root {
         font-family: system-ui, Segoe UI, sans-serif;
@@ -14,7 +14,7 @@
       body {
         margin: 0;
         padding: 24px;
-        max-width: 960px;
+        max-width: 1100px;
         margin-inline: auto;
       }
       h1 {
@@ -42,7 +42,9 @@
         color: #71717a;
         margin-bottom: 4px;
       }
-      input {
+      input[type="text"],
+      input[type="password"],
+      input[type="date"] {
         width: 100%;
         box-sizing: border-box;
         padding: 8px 10px;
@@ -71,6 +73,13 @@
         color: #3f3f46;
         border: 1px solid #e4e4e7;
       }
+      .btn-renew {
+        background: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+        font-size: 0.75rem;
+        padding: 6px 10px;
+      }
       .msg {
         padding: 10px 12px;
         border-radius: 8px;
@@ -92,13 +101,14 @@
       table {
         width: 100%;
         border-collapse: collapse;
-        font-size: 0.85rem;
+        font-size: 0.82rem;
       }
       th,
       td {
         text-align: left;
-        padding: 10px 8px;
+        padding: 10px 6px;
         border-bottom: 1px solid #f4f4f5;
+        vertical-align: top;
       }
       th {
         font-size: 0.7rem;
@@ -107,13 +117,14 @@
       }
       .mono {
         font-family: ui-monospace, Consolas, monospace;
-        font-size: 0.8rem;
+        font-size: 0.78rem;
         word-break: break-all;
       }
       .row-actions {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
+        max-width: 220px;
       }
       .grid {
         display: grid;
@@ -132,7 +143,7 @@
         margin-top: 4px;
         padding: 2px 8px;
         border-radius: 999px;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         font-weight: 600;
         white-space: nowrap;
       }
@@ -148,9 +159,31 @@
         background: #fef2f2;
         color: #b91c1c;
       }
-      .expiry-date {
-        font-size: 0.8rem;
-        color: #52525b;
+      .addon-tag {
+        display: inline-block;
+        margin: 2px 4px 2px 0;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #ede9fe;
+        color: #5b21b6;
+      }
+      .addon-pick {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .addon-pick label.chk {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        text-transform: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #3f3f46;
+        margin: 0;
       }
       tr.row-expired td {
         background: #fef2f2;
@@ -162,9 +195,7 @@
   </head>
   <body>
     <h1>Licencias MiniMarket POS</h1>
-    <p class="sub">
-      Panel v4 — API: <span class="mono" id="apiBase"></span>
-    </p>
+    <p class="sub">Panel v5 — Add-ons (Restaurante, Delivery) · Renovación +6 / +12 meses · API: <span class="mono" id="apiBase"></span></p>
 
     <div id="gate" class="card">
       <label>Clave de administrador (ADMIN_API_KEY en Railway)</label>
@@ -179,24 +210,26 @@
         <div class="grid grid-2">
           <div>
             <label>Machine ID</label>
-            <input id="machineId" placeholder="WEB-…" />
+            <input id="machineId" type="text" placeholder="WEB-…" />
           </div>
           <div>
             <label>Etiqueta</label>
-            <input id="label" placeholder="Caja 1" />
+            <input id="label" type="text" placeholder="Caja 1" />
           </div>
           <div>
             <label>Vence</label>
             <input id="expiresDate" type="date" />
           </div>
         </div>
+        <label>Add-ons incluidos</label>
+        <div class="addon-pick" id="createAddons"></div>
         <button type="button" class="btn-primary" id="createBtn">Crear licencia</button>
         <p id="createdKey" class="mono" style="margin-top: 12px; color: #047857"></p>
       </div>
 
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px">
-          <h2 style="margin: 0; font-size: 1rem">Licencias activas</h2>
+          <h2 style="margin: 0; font-size: 1rem">Licencias</h2>
           <button type="button" class="btn-ghost" id="refreshBtn">Actualizar</button>
         </div>
         <div style="overflow-x: auto">
@@ -205,10 +238,10 @@
               <tr>
                 <th>Etiqueta</th>
                 <th>Machine ID</th>
-                <th>Clave</th>
+                <th>Add-ons</th>
                 <th>Vence</th>
                 <th>Estado</th>
-                <th></th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -219,9 +252,13 @@
 
     <script>
       (function () {
-        const PANEL_V = 3;
-        const KEY_STORAGE = "license_admin_key_v3";
+        const PANEL_V = 5;
+        const KEY_STORAGE = "license_admin_key_v5";
         const API = window.location.origin.replace(/\/$/, "");
+        const ADDON_CODES = [
+          { code: "restaurant", label: "Restaurante" },
+          { code: "delivery", label: "Delivery" },
+        ];
 
         const gate = document.getElementById("gate");
         const app = document.getElementById("app");
@@ -229,7 +266,7 @@
         const tbody = document.getElementById("tbody");
         const expiresDate = document.getElementById("expiresDate");
         document.getElementById("apiBase").textContent = API;
-        expiresDate.value = "2030-12-31";
+        expiresDate.value = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().slice(0, 10);
 
         function getKey() {
           return (sessionStorage.getItem(KEY_STORAGE) || "").trim();
@@ -257,23 +294,13 @@
         }
 
         async function fetchJson(path, init) {
-          const url = API + path;
-          const res = await fetch(url, init);
+          const res = await fetch(API + path, init);
           const text = await res.text();
           let data;
           try {
             data = text ? JSON.parse(text) : {};
           } catch {
-            const snippet = text.replace(/\s+/g, " ").trim().slice(0, 120);
-            if (text.trim().startsWith("<") || text.includes("<!DOCTYPE")) {
-              throw new Error(
-                "El servidor devolvio HTML en lugar de JSON. " +
-                  "Railway aun no tiene el deploy v3. Haga push a GitHub y espere redeploy. (" +
-                  res.status +
-                  ")"
-              );
-            }
-            throw new Error("Respuesta invalida (" + res.status + "): " + snippet);
+            throw new Error("Respuesta invalida (" + res.status + ")");
           }
           return { res, data };
         }
@@ -290,7 +317,6 @@
             .replace(/"/g, "&quot;");
         }
 
-        /** Days until end of expiry calendar day (local). */
         function expiryStatus(iso) {
           const end = new Date(iso);
           if (Number.isNaN(end.getTime())) {
@@ -301,42 +327,75 @@
           const endDay = new Date(end);
           endDay.setHours(0, 0, 0, 0);
           const days = Math.round((endDay.getTime() - today.getTime()) / 86400000);
-          const dateStr = end.toLocaleDateString("es-VE", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          });
+          const dateStr = end.toLocaleDateString("es-VE", { year: "numeric", month: "short", day: "numeric" });
           if (days < 0) {
             const n = Math.abs(days);
-            return {
-              days,
-              label: "Vencida hace " + n + (n === 1 ? " día" : " días"),
-              cls: "expired",
-              dateStr,
-            };
+            return { days, label: "Vencida hace " + n + " d", cls: "expired", dateStr };
           }
-          if (days === 0) {
-            return { days, label: "Vence hoy", cls: "soon", dateStr };
-          }
-          if (days <= 30) {
-            return {
-              days,
-              label: days + (days === 1 ? " día restante" : " días restantes"),
-              cls: "soon",
-              dateStr,
-            };
-          }
-          return {
-            days,
-            label: days + " días restantes",
-            cls: "ok",
-            dateStr,
-          };
+          if (days === 0) return { days, label: "Vence hoy", cls: "soon", dateStr };
+          if (days <= 30) return { days, label: days + " d restantes", cls: "soon", dateStr };
+          return { days, label: days + " d restantes", cls: "ok", dateStr };
+        }
+
+        function addonTagsHtml(addons) {
+          const list = addons || [];
+          if (!list.length) return '<span style="color:#a1a1aa">—</span>';
+          return list.map(function (c) {
+            const label = ADDON_CODES.find(function (a) { return a.code === c; });
+            return '<span class="addon-tag">' + escapeHtml(label ? label.label : c) + "</span>";
+          }).join("");
+        }
+
+        function renderAddonCheckboxes(container, prefix, selected) {
+          const sel = new Set(selected || []);
+          container.innerHTML = ADDON_CODES.map(function (a) {
+            const id = prefix + "-" + a.code;
+            return (
+              '<label class="chk"><input type="checkbox" id="' +
+              id +
+              '" data-code="' +
+              a.code +
+              '"' +
+              (sel.has(a.code) ? " checked" : "") +
+              " /> " +
+              escapeHtml(a.label) +
+              "</label>"
+            );
+          }).join("");
+        }
+
+        function readAddonCheckboxes(container) {
+          const out = [];
+          container.querySelectorAll('input[type="checkbox"][data-code]:checked').forEach(function (el) {
+            out.push(el.getAttribute("data-code"));
+          });
+          return out;
         }
 
         function showApp(loggedIn) {
           gate.style.display = loggedIn ? "none" : "block";
           app.style.display = loggedIn ? "block" : "none";
+        }
+
+        async function saveAddons(id, container) {
+          const addons = readAddonCheckboxes(container);
+          const { res, data } = await fetchJson("/admin/licenses/" + id + "/addons", {
+            method: "PUT",
+            headers: authHeaders(),
+            body: JSON.stringify({ addons: addons }),
+          });
+          if (!res.ok) throw new Error(data.error || res.statusText);
+          return addons;
+        }
+
+        async function renewLicense(id, months) {
+          const { res, data } = await fetchJson("/admin/licenses/" + id + "/renew", {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify({ months: months }),
+          });
+          if (!res.ok) throw new Error(data.error || res.statusText);
+          return data;
         }
 
         async function load() {
@@ -346,7 +405,7 @@
             if (res.status === 401 || res.status === 503) {
               setKey("");
               showApp(false);
-              showMsg(data.error || data.hint || "Clave incorrecta o no configurada en Railway.", false);
+              showMsg(data.error || "Clave incorrecta.", false);
               return;
             }
             if (!res.ok) {
@@ -354,48 +413,71 @@
               return;
             }
             tbody.innerHTML = "";
-            let active = 0;
-            let expired = 0;
             for (const row of data.licenses || []) {
               const tr = document.createElement("tr");
               const exp = String(row.expires_at).slice(0, 10);
               const st = expiryStatus(row.expires_at);
-              if (st.days !== null && st.days < 0) expired++;
-              else active++;
               if (st.cls === "expired") tr.className = "row-expired";
               else if (st.cls === "soon") tr.className = "row-soon";
+
+              const addonCellId = "addons-" + row.id;
               tr.innerHTML =
-                "<td>" +
-                escapeHtml(row.label || "—") +
-                "</td><td class=\"mono\">" +
-                escapeHtml(row.machine_id) +
-                "</td><td class=\"mono\">" +
-                escapeHtml(row.license_key) +
-                '</td><td><div class="expiry-date">' +
-                escapeHtml(st.dateStr) +
-                '</div><input type="date" data-id="' +
-                escapeHtml(row.id) +
-                '" value="' +
-                escapeHtml(exp) +
-                '" style="margin:4px 0 0;width:auto" title="Cambiar vencimiento" /></td><td><span class="badge ' +
-                st.cls +
-                '">' +
-                escapeHtml(st.label) +
-                '</span></td><td class="row-actions">' +
-                '<button type="button" class="btn-ghost" data-save="' +
-                escapeHtml(row.id) +
-                '">Guardar</button> ' +
-                '<button type="button" class="btn-ghost" data-del="' +
-                escapeHtml(row.id) +
-                '">Eliminar</button></td>';
+                "<td>" + escapeHtml(row.label || "—") + "</td>" +
+                '<td class="mono">' + escapeHtml(row.machine_id) + "</td>" +
+                '<td><div id="' + addonCellId + '"></div></td>' +
+                "<td><div style='font-size:0.75rem;color:#71717a'>" + escapeHtml(st.dateStr) + "</div>" +
+                '<input type="date" data-id="' + escapeHtml(row.id) + '" value="' + escapeHtml(exp) + '" style="margin-top:4px;width:auto" /></td>' +
+                '<td><span class="badge ' + st.cls + '">' + escapeHtml(st.label) + "</span></td>" +
+                '<td class="row-actions">' +
+                '<button type="button" class="btn-renew" data-renew6="' + escapeHtml(row.id) + '">+6 meses</button>' +
+                '<button type="button" class="btn-renew" data-renew12="' + escapeHtml(row.id) + '">+1 año</button>' +
+                '<button type="button" class="btn-ghost" data-saveaddons="' + escapeHtml(row.id) + '">Guardar add-ons</button>' +
+                '<button type="button" class="btn-ghost" data-save="' + escapeHtml(row.id) + '">Guardar fecha</button>' +
+                '<button type="button" class="btn-ghost" data-del="' + escapeHtml(row.id) + '">Eliminar</button>' +
+                "</td>";
+
               tbody.appendChild(tr);
+              const addonBox = document.getElementById(addonCellId);
+              renderAddonCheckboxes(addonBox, "row-" + row.id, row.addons || []);
             }
-            if ((data.licenses || []).length > 0) {
-              showMsg(
-                active + " activa(s), " + expired + " vencida(s) — " + (data.licenses || []).length + " total.",
-                true
-              );
-            }
+
+            tbody.querySelectorAll("[data-renew6]").forEach(function (btn) {
+              btn.onclick = async function () {
+                const id = btn.getAttribute("data-renew6");
+                try {
+                  await renewLicense(id, 6);
+                  showMsg("Licencia renovada +6 meses.", true);
+                  await load();
+                } catch (e) {
+                  showMsg(e.message || String(e), false);
+                }
+              };
+            });
+            tbody.querySelectorAll("[data-renew12]").forEach(function (btn) {
+              btn.onclick = async function () {
+                const id = btn.getAttribute("data-renew12");
+                try {
+                  await renewLicense(id, 12);
+                  showMsg("Licencia renovada +1 año.", true);
+                  await load();
+                } catch (e) {
+                  showMsg(e.message || String(e), false);
+                }
+              };
+            });
+            tbody.querySelectorAll("[data-saveaddons]").forEach(function (btn) {
+              btn.onclick = async function () {
+                const id = btn.getAttribute("data-saveaddons");
+                const box = document.getElementById("addons-" + id);
+                try {
+                  await saveAddons(id, box);
+                  showMsg("Add-ons guardados.", true);
+                  await load();
+                } catch (e) {
+                  showMsg(e.message || String(e), false);
+                }
+              };
+            });
             tbody.querySelectorAll("[data-save]").forEach(function (btn) {
               btn.onclick = async function () {
                 const id = btn.getAttribute("data-save");
@@ -422,10 +504,13 @@
                 await load();
               };
             });
+            showMsg((data.licenses || []).length + " licencia(s).", true);
           } catch (e) {
             showMsg(e.message || String(e), false);
           }
         }
+
+        renderAddonCheckboxes(document.getElementById("createAddons"), "new", []);
 
         document.getElementById("saveKeyBtn").onclick = function () {
           const k = document.getElementById("adminKey").value.trim();
@@ -444,10 +529,11 @@
           document.getElementById("createdKey").textContent = "";
           const machineId = document.getElementById("machineId").value.trim();
           if (machineId.length < 8) {
-            showMsg("Machine ID demasiado corto (min. 8 caracteres).", false);
+            showMsg("Machine ID demasiado corto.", false);
             return;
           }
           try {
+            const addons = readAddonCheckboxes(document.getElementById("createAddons"));
             const { res, data } = await fetchJson("/admin/licenses", {
               method: "POST",
               headers: authHeaders(),
@@ -455,18 +541,12 @@
                 machineId: machineId,
                 label: document.getElementById("label").value.trim() || undefined,
                 expiresAt: toIsoEndOfDay(expiresDate.value),
+                addons: addons,
               }),
             });
             if (!res.ok) throw new Error(data.error || res.statusText);
-            const createdExpiry = expiryStatus(data.expiresAt);
             document.getElementById("createdKey").textContent =
-              "Licencia creada. Clave opcional: " +
-              data.licenseKey +
-              " — Vence: " +
-              createdExpiry.dateStr +
-              " (" +
-              createdExpiry.label +
-              ")";
+              "Creada. Clave: " + data.licenseKey + " · Add-ons: " + (data.addons || []).join(", ") || "ninguno";
             showMsg("Licencia registrada.", true);
             document.getElementById("machineId").value = "";
             await load();
@@ -474,17 +554,6 @@
             showMsg(e.message || String(e), false);
           }
         };
-
-        fetch(API + "/health")
-          .then(function (r) {
-            return r.json();
-          })
-          .then(function (h) {
-            if (h.panelVersion && h.panelVersion < PANEL_V) {
-              showMsg("Servidor API v" + h.panelVersion + " — espere redeploy del panel v3.", false);
-            }
-          })
-          .catch(function () {});
 
         if (getKey()) {
           showApp(true);

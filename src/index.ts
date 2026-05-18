@@ -10,7 +10,7 @@ import { resolvePublicDir } from "./resolvePublic.js";
 const envPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", ".env");
 dotenv.config({ path: envPath });
 
-const PANEL_VERSION = 4;
+const PANEL_VERSION = 5;
 
 const app = express();
 app.use(express.json({ limit: "64kb" }));

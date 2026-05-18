@@ -109,6 +109,14 @@ export async function openLicenseDb(dbPath = process.env.DATABASE_PATH ?? defaul
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
     CREATE INDEX IF NOT EXISTS idx_licenses_expires ON licenses(expires_at);
+
+    CREATE TABLE IF NOT EXISTS license_addons (
+      license_id TEXT NOT NULL,
+      addon_code TEXT NOT NULL,
+      PRIMARY KEY (license_id, addon_code),
+      FOREIGN KEY (license_id) REFERENCES licenses(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_license_addons_code ON license_addons(addon_code);
   `);
 
   console.log(`[license-db] ${resolved}`);
