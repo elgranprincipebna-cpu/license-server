@@ -34,11 +34,11 @@ function rowToJson(row: Record<string, unknown>) {
   };
 }
 
-export function createRoutes(db: LicenseDb) {
+export function createRoutes(db: LicenseDb, panelVersion = 1) {
   const r = Router();
 
   r.get("/health", (_req, res) => {
-    res.json({ ok: true, service: "minimarket-license-server" });
+    res.json({ ok: true, service: "minimarket-license-server", panelVersion });
   });
 
   r.post("/verify-license", (req, res) => {

@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MiniMarket — Licencias</title>
-    <!-- v2: fixed admin API routes -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <title>MiniMarket — Licencias (v3)</title>
     <style>
       :root {
         font-family: system-ui, Segoe UI, sans-serif;
@@ -71,21 +71,23 @@
         color: #3f3f46;
         border: 1px solid #e4e4e7;
       }
-      .error {
+      .msg {
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        margin-bottom: 12px;
+        display: none;
+      }
+      .msg.show {
+        display: block;
+      }
+      .msg.error {
         background: #fef2f2;
         color: #991b1b;
-        padding: 10px 12px;
-        border-radius: 8px;
-        font-size: 0.85rem;
-        margin-bottom: 12px;
       }
-      .ok {
+      .msg.ok {
         background: #ecfdf5;
         color: #065f46;
-        padding: 10px 12px;
-        border-radius: 8px;
-        font-size: 0.85rem;
-        margin-bottom: 12px;
       }
       table {
         width: 100%;
@@ -129,29 +131,31 @@
   </head>
   <body>
     <h1>Licencias MiniMarket POS</h1>
-    <p class="sub">Servidor central — registre cada caja por Machine ID. Los clientes POS consultan <span class="mono">POST /verify-license</span>.</p>
+    <p class="sub">
+      Panel v3 — API: <span class="mono" id="apiBase"></span>
+    </p>
 
     <div id="gate" class="card">
-      <label>Clave de administrador (ADMIN_API_KEY)</label>
-      <input id="adminKey" type="password" placeholder="La misma que en license-server/.env" />
+      <label>Clave de administrador (ADMIN_API_KEY en Railway)</label>
+      <input id="adminKey" type="password" autocomplete="off" placeholder="ADMIN_API_KEY" />
       <button type="button" class="btn-primary" id="saveKeyBtn">Entrar</button>
     </div>
 
     <div id="app" style="display: none">
       <div class="card">
         <h2 style="margin: 0 0 12px; font-size: 1rem">Nueva licencia</h2>
-        <div id="msg"></div>
+        <div id="msg" class="msg"></div>
         <div class="grid grid-2">
           <div>
-            <label>Machine ID (copiar del POS bloqueado)</label>
+            <label>Machine ID</label>
             <input id="machineId" placeholder="WEB-…" />
           </div>
           <div>
             <label>Etiqueta</label>
-            <input id="label" placeholder="Caja 1, Sucursal Centro…" />
+            <input id="label" placeholder="Caja 1" />
           </div>
           <div>
-            <label>Vence (fecha)</label>
+            <label>Vence</label>
             <input id="expiresDate" type="date" />
           </div>
         </div>
@@ -182,161 +186,203 @@
     </div>
 
     <script>
-      const KEY_STORAGE = "license_admin_key";
-      const gate = document.getElementById("gate");
-      const app = document.getElementById("app");
-      const msg = document.getElementById("msg");
-      const tbody = document.getElementById("tbody");
-      const expiresDate = document.getElementById("expiresDate");
-      expiresDate.value = "2030-12-31";
+      (function () {
+        const PANEL_V = 3;
+        const KEY_STORAGE = "license_admin_key_v3";
+        const API = window.location.origin.replace(/\/$/, "");
 
-      function getKey() {
-        return sessionStorage.getItem(KEY_STORAGE) || "";
-      }
-      function setKey(k) {
-        sessionStorage.setItem(KEY_STORAGE, k);
-      }
-      const API = window.location.origin;
+        const gate = document.getElementById("gate");
+        const app = document.getElementById("app");
+        const msgEl = document.getElementById("msg");
+        const tbody = document.getElementById("tbody");
+        const expiresDate = document.getElementById("expiresDate");
+        document.getElementById("apiBase").textContent = API;
+        expiresDate.value = "2030-12-31";
 
-      function authHeaders() {
-        return {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + getKey(),
-        };
-      }
-
-      async function apiFetch(path, init) {
-        const res = await fetch(API + path, init);
-        return res;
-      }
-      function showMsg(text, ok) {
-        msg.innerHTML = text ? `<div class="${ok ? "ok" : "error"}">${text}</div>` : "";
-      }
-      async function readJson(res) {
-        const text = await res.text();
-        try {
-          return JSON.parse(text);
-        } catch {
-          const preview = text.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
-          throw new Error(
-            res.status === 401
-              ? "Clave incorrecta. Use exactamente ADMIN_API_KEY de Railway (Variables)."
-              : res.status === 503
-                ? "ADMIN_API_KEY no configurada en Railway. Agreguela en Variables y redeploy."
-                : `Respuesta no valida (${res.status}): ${preview || "HTML en lugar de JSON"}`
-          );
+        function getKey() {
+          return (sessionStorage.getItem(KEY_STORAGE) || "").trim();
         }
-      }
-      function toIsoEndOfDay(dateStr) {
-        return new Date(dateStr + "T23:59:59.000Z").toISOString();
-      }
+        function setKey(k) {
+          sessionStorage.setItem(KEY_STORAGE, k.trim());
+        }
 
-      document.getElementById("saveKeyBtn").onclick = () => {
-        const k = document.getElementById("adminKey").value.trim();
-        if (!k) return;
-        setKey(k);
-        gate.style.display = "none";
-        app.style.display = "block";
-        void load();
-      };
-
-      if (getKey()) {
-        gate.style.display = "none";
-        app.style.display = "block";
-        void load();
-      }
-
-      async function load() {
-        showMsg("");
-        try {
-          const res = await apiFetch("/admin/licenses", { headers: authHeaders() });
-          const data = await readJson(res);
-          if (res.status === 401) {
-            setKey("");
-            showMsg(data.error || "Clave incorrecta. Vuelva a ingresar ADMIN_API_KEY.", false);
-            gate.style.display = "block";
-            app.style.display = "none";
+        function showMsg(text, ok) {
+          if (!text) {
+            msgEl.className = "msg";
+            msgEl.textContent = "";
             return;
           }
-          tbody.innerHTML = "";
-          for (const row of data.licenses || []) {
-            const tr = document.createElement("tr");
-            const exp = row.expires_at.slice(0, 10);
-            tr.innerHTML = `
-              <td>${row.label || "—"}</td>
-              <td class="mono">${row.machine_id}</td>
-              <td class="mono">${row.license_key}</td>
-              <td><input type="date" data-id="${row.id}" value="${exp}" style="margin:0;width:auto" /></td>
-              <td class="row-actions">
-                <button type="button" class="btn-ghost" data-save="${row.id}">Guardar</button>
-                <button type="button" class="btn-ghost" data-del="${row.id}">Eliminar</button>
-              </td>`;
-            tbody.appendChild(tr);
+          msgEl.className = "msg show " + (ok ? "ok" : "error");
+          msgEl.textContent = text;
+        }
+
+        function authHeaders() {
+          return {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + getKey(),
+          };
+        }
+
+        async function fetchJson(path, init) {
+          const url = API + path;
+          const res = await fetch(url, init);
+          const text = await res.text();
+          let data;
+          try {
+            data = text ? JSON.parse(text) : {};
+          } catch {
+            const snippet = text.replace(/\s+/g, " ").trim().slice(0, 120);
+            if (text.trim().startsWith("<") || text.includes("<!DOCTYPE")) {
+              throw new Error(
+                "El servidor devolvio HTML en lugar de JSON. " +
+                  "Railway aun no tiene el deploy v3. Haga push a GitHub y espere redeploy. (" +
+                  res.status +
+                  ")"
+              );
+            }
+            throw new Error("Respuesta invalida (" + res.status + "): " + snippet);
           }
-          tbody.querySelectorAll("[data-save]").forEach((btn) => {
-            btn.onclick = async () => {
-              const id = btn.getAttribute("data-save");
-              const input = tbody.querySelector(`input[data-id="${id}"]`);
-              try {
-                const r = await apiFetch("/admin/licenses/" + id, {
-                  method: "PATCH",
-                  headers: authHeaders(),
-                  body: JSON.stringify({ expiresAt: toIsoEndOfDay(input.value) }),
-                });
-                const patchData = await readJson(r);
-                if (!r.ok) throw new Error(patchData.error || r.statusText);
-                showMsg("Fecha actualizada.", true);
-                void load();
-              } catch (e) {
-                showMsg(e.message, false);
-              }
-            };
-          });
-          tbody.querySelectorAll("[data-del]").forEach((btn) => {
-            btn.onclick = async () => {
-              if (!confirm("¿Eliminar esta licencia? El POS dejará de funcionar.")) return;
-              const id = btn.getAttribute("data-del");
-              await apiFetch("/admin/licenses/" + id, { method: "DELETE", headers: authHeaders() });
-              void load();
-            };
-          });
-        } catch (e) {
-          showMsg("Error: " + e.message, false);
+          return { res, data };
         }
-      }
 
-      document.getElementById("refreshBtn").onclick = () => void load();
-
-      document.getElementById("createBtn").onclick = async () => {
-        showMsg("");
-        document.getElementById("createdKey").textContent = "";
-        const machineId = document.getElementById("machineId").value.trim();
-        if (machineId.length < 8) {
-          showMsg("Machine ID demasiado corto.", false);
-          return;
+        function toIsoEndOfDay(dateStr) {
+          return new Date(dateStr + "T23:59:59.000Z").toISOString();
         }
-        try {
-          const res = await apiFetch("/admin/licenses", {
-            method: "POST",
-            headers: authHeaders(),
-            body: JSON.stringify({
-              machineId,
-              label: document.getElementById("label").value.trim() || undefined,
-              expiresAt: toIsoEndOfDay(expiresDate.value),
-            }),
-          });
-          const data = await readJson(res);
-          if (!res.ok) throw new Error(data.error || res.statusText);
-          document.getElementById("createdKey").textContent =
-            "Licencia creada. Clave (opcional en POS): " + data.licenseKey;
-          showMsg("Licencia registrada.", true);
-          document.getElementById("machineId").value = "";
+
+        function showApp(loggedIn) {
+          gate.style.display = loggedIn ? "none" : "block";
+          app.style.display = loggedIn ? "block" : "none";
+        }
+
+        async function load() {
+          showMsg("");
+          try {
+            const { res, data } = await fetchJson("/admin/licenses", { headers: authHeaders() });
+            if (res.status === 401 || res.status === 503) {
+              setKey("");
+              showApp(false);
+              showMsg(data.error || data.hint || "Clave incorrecta o no configurada en Railway.", false);
+              return;
+            }
+            if (!res.ok) {
+              showMsg(data.error || "Error " + res.status, false);
+              return;
+            }
+            tbody.innerHTML = "";
+            for (const row of data.licenses || []) {
+              const tr = document.createElement("tr");
+              const exp = String(row.expires_at).slice(0, 10);
+              tr.innerHTML =
+                "<td>" +
+                (row.label || "—") +
+                "</td><td class=\"mono\">" +
+                row.machine_id +
+                "</td><td class=\"mono\">" +
+                row.license_key +
+                '</td><td><input type="date" data-id="' +
+                row.id +
+                '" value="' +
+                exp +
+                '" style="margin:0;width:auto" /></td><td class="row-actions">' +
+                '<button type="button" class="btn-ghost" data-save="' +
+                row.id +
+                '">Guardar</button> ' +
+                '<button type="button" class="btn-ghost" data-del="' +
+                row.id +
+                '">Eliminar</button></td>';
+              tbody.appendChild(tr);
+            }
+            tbody.querySelectorAll("[data-save]").forEach(function (btn) {
+              btn.onclick = async function () {
+                const id = btn.getAttribute("data-save");
+                const input = tbody.querySelector('input[data-id="' + id + '"]');
+                try {
+                  const { res: r, data: d } = await fetchJson("/admin/licenses/" + id, {
+                    method: "PATCH",
+                    headers: authHeaders(),
+                    body: JSON.stringify({ expiresAt: toIsoEndOfDay(input.value) }),
+                  });
+                  if (!r.ok) throw new Error(d.error || r.statusText);
+                  showMsg("Fecha actualizada.", true);
+                  await load();
+                } catch (e) {
+                  showMsg(e.message || String(e), false);
+                }
+              };
+            });
+            tbody.querySelectorAll("[data-del]").forEach(function (btn) {
+              btn.onclick = async function () {
+                if (!confirm("Eliminar esta licencia?")) return;
+                const id = btn.getAttribute("data-del");
+                await fetchJson("/admin/licenses/" + id, { method: "DELETE", headers: authHeaders() });
+                await load();
+              };
+            });
+          } catch (e) {
+            showMsg(e.message || String(e), false);
+          }
+        }
+
+        document.getElementById("saveKeyBtn").onclick = function () {
+          const k = document.getElementById("adminKey").value.trim();
+          if (!k) return;
+          setKey(k);
+          showApp(true);
           void load();
-        } catch (e) {
-          showMsg(e.message, false);
+        };
+
+        document.getElementById("refreshBtn").onclick = function () {
+          void load();
+        };
+
+        document.getElementById("createBtn").onclick = async function () {
+          showMsg("");
+          document.getElementById("createdKey").textContent = "";
+          const machineId = document.getElementById("machineId").value.trim();
+          if (machineId.length < 8) {
+            showMsg("Machine ID demasiado corto (min. 8 caracteres).", false);
+            return;
+          }
+          try {
+            const { res, data } = await fetchJson("/admin/licenses", {
+              method: "POST",
+              headers: authHeaders(),
+              body: JSON.stringify({
+                machineId: machineId,
+                label: document.getElementById("label").value.trim() || undefined,
+                expiresAt: toIsoEndOfDay(expiresDate.value),
+              }),
+            });
+            if (!res.ok) throw new Error(data.error || res.statusText);
+            document.getElementById("createdKey").textContent =
+              "Licencia creada. Clave opcional: " + data.licenseKey;
+            showMsg("Licencia registrada.", true);
+            document.getElementById("machineId").value = "";
+            await load();
+          } catch (e) {
+            showMsg(e.message || String(e), false);
+          }
+        };
+
+        fetch(API + "/health")
+          .then(function (r) {
+            return r.json();
+          })
+          .then(function (h) {
+            if (h.panelVersion && h.panelVersion < PANEL_V) {
+              showMsg("Servidor API v" + h.panelVersion + " — espere redeploy del panel v3.", false);
+            }
+          })
+          .catch(function () {});
+
+        if (getKey()) {
+          showApp(true);
+          void load();
+        } else {
+          showApp(false);
         }
-      };
+      })();
     </script>
   </body>
 </html>

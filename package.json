@@ -6,8 +6,8 @@
   "description": "Central license server for MiniMarket POS clients",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "prebuild": "node -e \"const fs=require('fs');if(!fs.existsSync('src/index.ts')){console.error('\\nBUILD FAILED: src/ folder missing on server.\\nPush the full project with Git (run push-to-github.ps1), not the GitHub website file picker.\\n');process.exit(1)}\"",
-    "build": "tsc",
+    "prebuild": "node -e \"const fs=require('fs');if(!fs.existsSync('src/index.ts')){console.error('BUILD FAILED: src/ missing');process.exit(1)}\"",
+    "build": "tsc && node scripts/copy-public.mjs",
     "start": "node dist/index.js"
   },
   "dependencies": {
