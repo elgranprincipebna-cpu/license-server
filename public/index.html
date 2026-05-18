@@ -4,36 +4,262 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <title>MiniMarket — Licencias (v5)</title>
+    <meta name="theme-color" content="#003893" />
+    <title>VenTECH — Licencias POS</title>
+    <link rel="icon" href="/assets/ventech-logo.svg" type="image/svg+xml" />
     <style>
       :root {
-        font-family: system-ui, Segoe UI, sans-serif;
-        color: #18181b;
-        background: #f4f4f5;
+        --vz-yellow: #ffcc00;
+        --vz-blue: #003893;
+        --vz-red: #cf142b;
+        --tech-cyan: #22d3ee;
+        --tech-indigo: #1e1b4b;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --surface: #ffffff;
+        --line: #e2e8f0;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        color: var(--ink);
       }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
+        min-height: 100vh;
+        background: #f1f5f9;
+      }
+
+      /* —— Login screen —— */
+      .login-screen {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         padding: 24px;
-        max-width: 1100px;
-        margin-inline: auto;
+        position: relative;
+        overflow: hidden;
       }
-      h1 {
-        font-size: 1.5rem;
-        margin: 0 0 8px;
+
+      .login-bg {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(ellipse 80% 60% at 50% -10%, rgba(34, 211, 238, 0.22), transparent 55%),
+          radial-gradient(ellipse 60% 50% at 100% 100%, rgba(207, 20, 43, 0.12), transparent 50%),
+          radial-gradient(ellipse 50% 40% at 0% 80%, rgba(255, 204, 0, 0.14), transparent 45%),
+          linear-gradient(165deg, #0c1a3a 0%, #003893 42%, #1e1b4b 100%);
       }
-      .sub {
-        color: #52525b;
+
+      .login-bg::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 48px 48px;
+        mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent);
+      }
+
+      .login-card {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 400px;
+        padding: 40px 36px 32px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.97);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        box-shadow:
+          0 32px 64px rgba(0, 0, 0, 0.28),
+          0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+        text-align: center;
+      }
+
+      .login-logo-wrap {
+        margin: 0 auto 20px;
+        width: 120px;
+        height: 120px;
+        filter: drop-shadow(0 12px 24px rgba(0, 56, 147, 0.25));
+      }
+
+      .login-logo-wrap img,
+      .login-logo-wrap svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .brand-name {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-indent: 0.14em;
+        background: linear-gradient(135deg, var(--vz-blue) 0%, var(--tech-indigo) 50%, var(--tech-cyan) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .brand-tagline {
+        margin: 6px 0 0;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .login-sub {
+        margin: 20px 0 24px;
         font-size: 0.9rem;
+        color: #475569;
+        line-height: 1.5;
+      }
+
+      .login-card label {
+        display: block;
+        text-align: left;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #64748b;
+        margin-bottom: 6px;
+      }
+
+      .login-card input[type="password"] {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid var(--line);
+        border-radius: 12px;
+        font-size: 0.95rem;
+        margin-bottom: 16px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+
+      .login-card input[type="password"]:focus {
+        outline: none;
+        border-color: var(--vz-blue);
+        box-shadow: 0 0 0 4px rgba(0, 56, 147, 0.12);
+      }
+
+      .btn-login {
+        width: 100%;
+        padding: 14px 20px;
+        border: none;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        color: #fff;
+        background: linear-gradient(135deg, var(--vz-blue) 0%, #0c4a6e 55%, var(--tech-indigo) 100%);
+        box-shadow: 0 8px 20px rgba(0, 56, 147, 0.35);
+        transition: transform 0.12s, box-shadow 0.12s;
+      }
+
+      .btn-login:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 28px rgba(0, 56, 147, 0.4);
+      }
+
+      .login-footer {
+        margin: 24px 0 0;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+        font-size: 0.75rem;
+        color: #94a3b8;
+      }
+
+      .login-footer .mono {
+        display: block;
+        margin-top: 6px;
+        font-size: 0.68rem;
+        word-break: break-all;
+      }
+
+      #loginMsg {
+        margin-bottom: 12px;
+        text-align: left;
+      }
+
+      /* —— App shell —— */
+      #app {
+        display: none;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 24px 32px;
+      }
+
+      .app-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 16px;
+        padding: 20px 0 24px;
+        border-bottom: 1px solid var(--line);
         margin-bottom: 24px;
       }
+
+      .app-header-brand {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+      }
+
+      .app-header-logo {
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+      }
+
+      .app-header h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: var(--vz-blue);
+      }
+
+      .app-header .sub {
+        margin: 2px 0 0;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .app-header-meta {
+        margin-left: auto;
+        font-size: 0.75rem;
+        color: var(--muted);
+        text-align: right;
+      }
+
+      .app-header-meta .mono {
+        font-family: ui-monospace, Consolas, monospace;
+        font-size: 0.7rem;
+        word-break: break-all;
+      }
+
       .card {
-        background: #fff;
-        border: 1px solid #e4e4e7;
-        border-radius: 12px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
         padding: 20px;
         margin-bottom: 20px;
-        box-shadow: 0 1px 3px rgb(0 0 0 / 6%);
+        box-shadow: 0 1px 3px rgb(15 23 42 / 6%);
       }
+
+      .card h2 {
+        margin: 0 0 12px;
+        font-size: 1rem;
+        color: var(--ink);
+      }
+
       label {
         display: block;
         font-size: 0.75rem;
@@ -42,17 +268,18 @@
         color: #71717a;
         margin-bottom: 4px;
       }
+
       input[type="text"],
       input[type="password"],
       input[type="date"] {
         width: 100%;
-        box-sizing: border-box;
         padding: 8px 10px;
         border: 1px solid #d4d4d8;
         border-radius: 8px;
         font-size: 0.9rem;
         margin-bottom: 12px;
       }
+
       button {
         cursor: pointer;
         border: none;
@@ -61,18 +288,22 @@
         font-size: 0.85rem;
         font-weight: 600;
       }
+
       .btn-primary {
-        background: #059669;
+        background: linear-gradient(135deg, #059669, #047857);
         color: #fff;
       }
+
       .btn-primary:hover {
-        background: #047857;
+        filter: brightness(1.05);
       }
+
       .btn-ghost {
-        background: #f4f4f5;
+        background: #f8fafc;
         color: #3f3f46;
-        border: 1px solid #e4e4e7;
+        border: 1px solid var(--line);
       }
+
       .btn-renew {
         background: #ecfdf5;
         color: #047857;
@@ -80,6 +311,7 @@
         font-size: 0.75rem;
         padding: 6px 10px;
       }
+
       .msg {
         padding: 10px 12px;
         border-radius: 8px;
@@ -87,22 +319,27 @@
         margin-bottom: 12px;
         display: none;
       }
+
       .msg.show {
         display: block;
       }
+
       .msg.error {
         background: #fef2f2;
         color: #991b1b;
       }
+
       .msg.ok {
         background: #ecfdf5;
         color: #065f46;
       }
+
       table {
         width: 100%;
         border-collapse: collapse;
         font-size: 0.82rem;
       }
+
       th,
       td {
         text-align: left;
@@ -110,34 +347,37 @@
         border-bottom: 1px solid #f4f4f5;
         vertical-align: top;
       }
+
       th {
         font-size: 0.7rem;
         text-transform: uppercase;
         color: #71717a;
       }
+
       .mono {
         font-family: ui-monospace, Consolas, monospace;
         font-size: 0.78rem;
         word-break: break-all;
       }
+
       .row-actions {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
         max-width: 220px;
       }
+
       .grid {
         display: grid;
         gap: 12px;
       }
+
       @media (min-width: 640px) {
         .grid-2 {
           grid-template-columns: 1fr 1fr;
         }
       }
-      #gate {
-        max-width: 420px;
-      }
+
       .badge {
         display: inline-block;
         margin-top: 4px;
@@ -147,18 +387,22 @@
         font-weight: 600;
         white-space: nowrap;
       }
+
       .badge.ok {
         background: #ecfdf5;
         color: #047857;
       }
+
       .badge.soon {
         background: #fffbeb;
         color: #b45309;
       }
+
       .badge.expired {
         background: #fef2f2;
         color: #b91c1c;
       }
+
       .addon-tag {
         display: inline-block;
         margin: 2px 4px 2px 0;
@@ -169,12 +413,14 @@
         background: #ede9fe;
         color: #5b21b6;
       }
+
       .addon-pick {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
         margin-bottom: 12px;
       }
+
       .addon-pick label.chk {
         display: flex;
         align-items: center;
@@ -185,27 +431,80 @@
         color: #3f3f46;
         margin: 0;
       }
+
       tr.row-expired td {
         background: #fef2f2;
       }
+
       tr.row-soon td {
         background: #fffbeb;
+      }
+
+      .btn-logout {
+        margin-top: 4px;
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        background: transparent;
+        color: var(--vz-blue);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      .btn-logout:hover {
+        background: #f8fafc;
       }
     </style>
   </head>
   <body>
-    <h1>Licencias MiniMarket POS</h1>
-    <p class="sub">Panel v5 — Add-ons (Restaurante, Delivery) · Renovación +6 / +12 meses · API: <span class="mono" id="apiBase"></span></p>
+    <section id="loginScreen" class="login-screen" aria-label="Inicio de sesión">
+      <div class="login-bg" aria-hidden="true"></div>
+      <div class="login-card">
+        <div class="login-logo-wrap">
+          <img src="/assets/ventech-logo.svg" width="120" height="120" alt="VenTECH" />
+        </div>
+        <h1 class="brand-name">VENTECH</h1>
+        <p class="brand-tagline">Venezuela · Tecnología</p>
+        <p class="login-sub">Panel de licencias MiniMarket POS<br />Add-ons · Renovaciones · Control de equipos</p>
 
-    <div id="gate" class="card">
-      <label>Clave de administrador (ADMIN_API_KEY en Railway)</label>
-      <input id="adminKey" type="password" autocomplete="off" placeholder="ADMIN_API_KEY" />
-      <button type="button" class="btn-primary" id="saveKeyBtn">Entrar</button>
-    </div>
+        <div id="loginMsg" class="msg"></div>
+        <label for="adminKey">Clave de administrador</label>
+        <input
+          id="adminKey"
+          type="password"
+          autocomplete="off"
+          placeholder="ADMIN_API_KEY"
+          aria-describedby="keyHint"
+        />
+        <p id="keyHint" style="margin: -8px 0 16px; font-size: 0.72rem; color: #94a3b8; text-align: left">
+          Variable <span class="mono">ADMIN_API_KEY</span> en Railway
+        </p>
+        <button type="button" class="btn-login" id="saveKeyBtn">Entrar al panel</button>
 
-    <div id="app" style="display: none">
+        <p class="login-footer">
+          © VenTECH
+          <span class="mono" id="apiBaseLogin"></span>
+        </p>
+      </div>
+    </section>
+
+    <main id="app">
+      <header class="app-header">
+        <div class="app-header-brand">
+          <img class="app-header-logo" src="/assets/ventech-logo.svg" width="48" height="48" alt="" />
+          <div>
+            <h1>VENTECH</h1>
+            <p class="sub">Licencias MiniMarket POS · Panel v5</p>
+          </div>
+        </div>
+        <div class="app-header-meta">
+          <div>API <span class="mono" id="apiBase"></span></div>
+          <button type="button" class="btn-logout" id="logoutBtn">Cerrar sesión</button>
+        </div>
+      </header>
+
       <div class="card">
-        <h2 style="margin: 0 0 12px; font-size: 1rem">Nueva licencia</h2>
+        <h2>Nueva licencia</h2>
         <div id="msg" class="msg"></div>
         <div class="grid grid-2">
           <div>
@@ -229,7 +528,7 @@
 
       <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px">
-          <h2 style="margin: 0; font-size: 1rem">Licencias</h2>
+          <h2 style="margin: 0">Licencias</h2>
           <button type="button" class="btn-ghost" id="refreshBtn">Actualizar</button>
         </div>
         <div style="overflow-x: auto">
@@ -248,7 +547,7 @@
           </table>
         </div>
       </div>
-    </div>
+    </main>
 
     <script>
       (function () {
@@ -260,12 +559,16 @@
           { code: "delivery", label: "Delivery" },
         ];
 
-        const gate = document.getElementById("gate");
+        const loginScreen = document.getElementById("loginScreen");
         const app = document.getElementById("app");
+        const loginMsgEl = document.getElementById("loginMsg");
         const msgEl = document.getElementById("msg");
         const tbody = document.getElementById("tbody");
         const expiresDate = document.getElementById("expiresDate");
-        document.getElementById("apiBase").textContent = API;
+        const apiBaseEl = document.getElementById("apiBase");
+        const apiBaseLoginEl = document.getElementById("apiBaseLogin");
+        if (apiBaseEl) apiBaseEl.textContent = API;
+        if (apiBaseLoginEl) apiBaseLoginEl.textContent = API;
         expiresDate.value = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().slice(0, 10);
 
         function getKey() {
@@ -273,6 +576,16 @@
         }
         function setKey(k) {
           sessionStorage.setItem(KEY_STORAGE, k.trim());
+        }
+
+        function showLoginMsg(text, ok) {
+          if (!text) {
+            loginMsgEl.className = "msg";
+            loginMsgEl.textContent = "";
+            return;
+          }
+          loginMsgEl.className = "msg show " + (ok ? "ok" : "error");
+          loginMsgEl.textContent = text;
         }
 
         function showMsg(text, ok) {
@@ -340,10 +653,14 @@
         function addonTagsHtml(addons) {
           const list = addons || [];
           if (!list.length) return '<span style="color:#a1a1aa">—</span>';
-          return list.map(function (c) {
-            const label = ADDON_CODES.find(function (a) { return a.code === c; });
-            return '<span class="addon-tag">' + escapeHtml(label ? label.label : c) + "</span>";
-          }).join("");
+          return list
+            .map(function (c) {
+              const label = ADDON_CODES.find(function (a) {
+                return a.code === c;
+              });
+              return '<span class="addon-tag">' + escapeHtml(label ? label.label : c) + "</span>";
+            })
+            .join("");
         }
 
         function renderAddonCheckboxes(container, prefix, selected) {
@@ -373,8 +690,9 @@
         }
 
         function showApp(loggedIn) {
-          gate.style.display = loggedIn ? "none" : "block";
+          loginScreen.style.display = loggedIn ? "none" : "flex";
           app.style.display = loggedIn ? "block" : "none";
+          if (!loggedIn) showLoginMsg("");
         }
 
         async function saveAddons(id, container) {
@@ -405,7 +723,7 @@
             if (res.status === 401 || res.status === 503) {
               setKey("");
               showApp(false);
-              showMsg(data.error || "Clave incorrecta.", false);
+              showLoginMsg(data.error || "Clave incorrecta.", false);
               return;
             }
             if (!res.ok) {
@@ -422,18 +740,44 @@
 
               const addonCellId = "addons-" + row.id;
               tr.innerHTML =
-                "<td>" + escapeHtml(row.label || "—") + "</td>" +
-                '<td class="mono">' + escapeHtml(row.machine_id) + "</td>" +
-                '<td><div id="' + addonCellId + '"></div></td>' +
-                "<td><div style='font-size:0.75rem;color:#71717a'>" + escapeHtml(st.dateStr) + "</div>" +
-                '<input type="date" data-id="' + escapeHtml(row.id) + '" value="' + escapeHtml(exp) + '" style="margin-top:4px;width:auto" /></td>' +
-                '<td><span class="badge ' + st.cls + '">' + escapeHtml(st.label) + "</span></td>" +
+                "<td>" +
+                escapeHtml(row.label || "—") +
+                "</td>" +
+                '<td class="mono">' +
+                escapeHtml(row.machine_id) +
+                "</td>" +
+                '<td><div id="' +
+                addonCellId +
+                '"></div></td>' +
+                "<td><div style='font-size:0.75rem;color:#71717a'>" +
+                escapeHtml(st.dateStr) +
+                "</div>" +
+                '<input type="date" data-id="' +
+                escapeHtml(row.id) +
+                '" value="' +
+                escapeHtml(exp) +
+                '" style="margin-top:4px;width:auto" /></td>' +
+                '<td><span class="badge ' +
+                st.cls +
+                '">' +
+                escapeHtml(st.label) +
+                "</span></td>" +
                 '<td class="row-actions">' +
-                '<button type="button" class="btn-renew" data-renew6="' + escapeHtml(row.id) + '">+6 meses</button>' +
-                '<button type="button" class="btn-renew" data-renew12="' + escapeHtml(row.id) + '">+1 año</button>' +
-                '<button type="button" class="btn-ghost" data-saveaddons="' + escapeHtml(row.id) + '">Guardar add-ons</button>' +
-                '<button type="button" class="btn-ghost" data-save="' + escapeHtml(row.id) + '">Guardar fecha</button>' +
-                '<button type="button" class="btn-ghost" data-del="' + escapeHtml(row.id) + '">Eliminar</button>' +
+                '<button type="button" class="btn-renew" data-renew6="' +
+                escapeHtml(row.id) +
+                '">+6 meses</button>' +
+                '<button type="button" class="btn-renew" data-renew12="' +
+                escapeHtml(row.id) +
+                '">+1 año</button>' +
+                '<button type="button" class="btn-ghost" data-saveaddons="' +
+                escapeHtml(row.id) +
+                '">Guardar add-ons</button>' +
+                '<button type="button" class="btn-ghost" data-save="' +
+                escapeHtml(row.id) +
+                '">Guardar fecha</button>' +
+                '<button type="button" class="btn-ghost" data-del="' +
+                escapeHtml(row.id) +
+                '">Eliminar</button>' +
                 "</td>";
 
               tbody.appendChild(tr);
@@ -514,10 +858,23 @@
 
         document.getElementById("saveKeyBtn").onclick = function () {
           const k = document.getElementById("adminKey").value.trim();
-          if (!k) return;
+          if (!k) {
+            showLoginMsg("Ingrese la clave de administrador.", false);
+            return;
+          }
           setKey(k);
           showApp(true);
           void load();
+        };
+
+        document.getElementById("adminKey").addEventListener("keydown", function (e) {
+          if (e.key === "Enter") document.getElementById("saveKeyBtn").click();
+        });
+
+        document.getElementById("logoutBtn").onclick = function () {
+          setKey("");
+          document.getElementById("adminKey").value = "";
+          showApp(false);
         };
 
         document.getElementById("refreshBtn").onclick = function () {
@@ -546,7 +903,10 @@
             });
             if (!res.ok) throw new Error(data.error || res.statusText);
             document.getElementById("createdKey").textContent =
-              "Creada. Clave: " + data.licenseKey + " · Add-ons: " + (data.addons || []).join(", ") || "ninguno";
+              "Creada. Clave: " +
+              data.licenseKey +
+              " · Add-ons: " +
+              ((data.addons || []).join(", ") || "ninguno");
             showMsg("Licencia registrada.", true);
             document.getElementById("machineId").value = "";
             await load();

@@ -29,6 +29,13 @@ const indexHtml = path.join(publicDir, "index.html");
 const db = await openLicenseDb();
 app.use(createRoutes(db, PANEL_VERSION));
 
+app.use(
+  express.static(publicDir, {
+    index: false,
+    maxAge: process.env.NODE_ENV === "production" ? "1h" : 0,
+  })
+);
+
 app.get("/", (_req, res) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.setHeader("Pragma", "no-cache");

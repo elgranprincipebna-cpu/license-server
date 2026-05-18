@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="VenTECH">
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="50%" stop-color="#003893"/>
+      <stop offset="100%" stop-color="#1e1b4b"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.2"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0c4a6e" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <circle cx="80" cy="80" r="74" fill="url(#sky)" filter="url(#soft)"/>
+  <circle cx="80" cy="80" r="68" fill="none" stroke="url(#glow)" stroke-width="2" opacity="0.85"/>
+  <!-- Venezuela tricolor arc -->
+  <path d="M18 92 A62 62 0 0 1 142 92" fill="none" stroke="#FFCC00" stroke-width="10" stroke-linecap="round"/>
+  <path d="M24 98 A56 56 0 0 1 136 98" fill="none" stroke="#003893" stroke-width="10" stroke-linecap="round"/>
+  <path d="M30 104 A50 50 0 0 1 130 104" fill="none" stroke="#CF142B" stroke-width="10" stroke-linecap="round"/>
+  <!-- Tech hex frame -->
+  <path d="M80 28 L112 46.5 V83.5 L80 102 L48 83.5 V46.5 Z" fill="none" stroke="#22d3ee" stroke-width="2.2" opacity="0.9"/>
+  <path d="M80 38 L102 50.8 V69.2 L80 82 L58 69.2 V50.8 Z" fill="#0f172a" fill-opacity="0.55" stroke="#67e8f9" stroke-width="1.2"/>
+  <!-- Circuit nodes -->
+  <circle cx="80" cy="60" r="4" fill="#22d3ee"/>
+  <circle cx="68" cy="72" r="3" fill="#fbbf24"/>
+  <circle cx="92" cy="72" r="3" fill="#fbbf24"/>
+  <path d="M80 64 V72 M68 72 H92 M80 64 L68 72 M80 64 L92 72" stroke="#38bdf8" stroke-width="1.4" stroke-linecap="round" opacity="0.85"/>
+  <!-- Stars (Venezuela) -->
+  <g fill="#FFCC00" opacity="0.95">
+    <polygon points="38,58 39.2,61.2 42.6,61.2 39.8,63.2 40.8,66.6 38,64.6 35.2,66.6 36.2,63.2 33.4,61.2 36.8,61.2"/>
+    <polygon points="48,52 49.1,54.8 52.2,54.8 49.8,56.5 50.7,59.2 48,57.4 45.3,59.2 46.2,56.5 43.8,54.8 46.9,54.8"/>
+    <polygon points="58,48 59,50.5 61.8,50.5 59.7,52 60.5,54.5 58,53 55.5,54.5 56.3,52 54.2,50.5 57,50.5"/>
+    <polygon points="102,48 103,50.5 105.8,50.5 103.7,52 104.5,54.5 102,53 99.5,54.5 100.3,52 98.2,50.5 101,50.5"/>
+    <polygon points="112,52 113.1,54.8 116.2,54.8 113.8,56.5 114.7,59.2 112,57.4 109.3,59.2 110.2,56.5 107.8,54.8 110.9,54.8"/>
+    <polygon points="122,58 123.2,61.2 126.6,61.2 123.8,63.2 124.8,66.6 122,64.6 119.2,66.6 120.2,63.2 117.4,61.2 120.8,61.2"/>
+  </g>
+  <!-- V monogram -->
+  <path d="M66 88 L80 108 L94 88" fill="none" stroke="url(#gold)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M72 88 L80 100 L88 88" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+</svg>
