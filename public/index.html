@@ -29,7 +29,18 @@
       body {
         margin: 0;
         min-height: 100vh;
-        background: #f1f5f9;
+        background: #e8eef5;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
       }
 
       /* —— Login screen —— */
@@ -38,9 +49,123 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 24px;
+        padding: 20px;
         position: relative;
         overflow: hidden;
+      }
+
+      .login-shell {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        width: 100%;
+        max-width: 920px;
+        gap: 0;
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.35);
+      }
+
+      @media (min-width: 768px) {
+        .login-shell {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .login-hero {
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        padding: 48px 40px;
+        background: linear-gradient(160deg, rgba(0, 56, 147, 0.95) 0%, rgba(30, 27, 75, 0.98) 100%);
+        color: #fff;
+        text-align: left;
+      }
+
+      @media (min-width: 768px) {
+        .login-hero {
+          display: flex;
+        }
+      }
+
+      .login-hero-logo {
+        width: 88px;
+        height: 88px;
+        margin-bottom: 24px;
+        filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.3));
+        animation: logo-float 4s ease-in-out infinite;
+      }
+
+      @keyframes logo-float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-6px);
+        }
+      }
+
+      .login-hero h2 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+      }
+
+      .login-hero p {
+        margin: 12px 0 0;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      .login-hero-stripes {
+        display: flex;
+        gap: 4px;
+        margin: 28px 0 20px;
+        height: 6px;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .login-hero-stripes span:nth-child(1) {
+        flex: 1;
+        background: var(--vz-yellow);
+      }
+      .login-hero-stripes span:nth-child(2) {
+        flex: 1;
+        background: var(--vz-blue);
+      }
+      .login-hero-stripes span:nth-child(3) {
+        flex: 1;
+        background: var(--vz-red);
+      }
+
+      .login-features {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .login-features li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.82rem;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .login-features li::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--tech-cyan);
+        box-shadow: 0 0 8px var(--tech-cyan);
       }
 
       .login-bg {
@@ -65,25 +190,31 @@
       }
 
       .login-card {
-        position: relative;
-        z-index: 1;
-        width: 100%;
-        max-width: 400px;
-        padding: 40px 36px 32px;
-        border-radius: 24px;
-        background: rgba(255, 255, 255, 0.97);
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        box-shadow:
-          0 32px 64px rgba(0, 0, 0, 0.28),
-          0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+        padding: 36px 32px 28px;
+        background: #fff;
         text-align: center;
       }
 
+      @media (max-width: 767px) {
+        .login-shell {
+          max-width: 420px;
+        }
+        .login-card {
+          border-radius: 24px;
+        }
+      }
+
       .login-logo-wrap {
-        margin: 0 auto 20px;
-        width: 120px;
-        height: 120px;
-        filter: drop-shadow(0 12px 24px rgba(0, 56, 147, 0.25));
+        margin: 0 auto 16px;
+        width: 96px;
+        height: 96px;
+        filter: drop-shadow(0 10px 20px rgba(0, 56, 147, 0.2));
+      }
+
+      @media (min-width: 768px) {
+        .login-logo-wrap {
+          display: none;
+        }
       }
 
       .login-logo-wrap img,
@@ -132,20 +263,36 @@
         margin-bottom: 6px;
       }
 
-      .login-card input[type="password"] {
+      .field-wrap {
+        position: relative;
+        margin-bottom: 16px;
+        text-align: left;
+      }
+
+      .field-wrap input[type="password"] {
         width: 100%;
-        padding: 14px 16px;
+        padding: 14px 44px 14px 44px;
         border: 2px solid var(--line);
         border-radius: 12px;
         font-size: 0.95rem;
-        margin-bottom: 16px;
+        margin: 0;
         transition: border-color 0.15s, box-shadow 0.15s;
       }
 
-      .login-card input[type="password"]:focus {
+      .field-wrap input[type="password"]:focus {
         outline: none;
         border-color: var(--vz-blue);
         box-shadow: 0 0 0 4px rgba(0, 56, 147, 0.12);
+      }
+
+      .field-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1rem;
+        opacity: 0.45;
+        pointer-events: none;
       }
 
       .btn-login {
@@ -187,12 +334,153 @@
         text-align: left;
       }
 
+      /* —— Add-on tiles —— */
+      .addon-tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      .addon-tile {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+        border: 2px solid var(--line);
+        border-radius: 14px;
+        background: linear-gradient(145deg, #fafbfc, #fff);
+        cursor: pointer;
+        transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+        user-select: none;
+        margin: 0;
+        text-transform: none;
+        font-weight: normal;
+      }
+
+      .addon-tile:hover {
+        border-color: #cbd5e1;
+        transform: translateY(-1px);
+      }
+
+      .addon-tile:has(input:checked) {
+        border-color: var(--vz-blue);
+        background: linear-gradient(145deg, #eff6ff, #f0f9ff);
+        box-shadow: 0 4px 14px rgba(0, 56, 147, 0.12);
+      }
+
+      .addon-tile.restaurant:has(input:checked) {
+        border-color: #d97706;
+        background: linear-gradient(145deg, #fffbeb, #fef3c7);
+        box-shadow: 0 4px 14px rgba(217, 119, 6, 0.15);
+      }
+
+      .addon-tile.delivery:has(input:checked) {
+        border-color: #0891b2;
+        background: linear-gradient(145deg, #ecfeff, #cffafe);
+        box-shadow: 0 4px 14px rgba(8, 145, 178, 0.15);
+      }
+
+      .addon-tile-icon {
+        font-size: 1.5rem;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+
+      .addon-tile-body {
+        flex: 1;
+        min-width: 0;
+        text-align: left;
+      }
+
+      .addon-tile-body strong {
+        display: block;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .addon-tile-body small {
+        display: block;
+        margin-top: 2px;
+        font-size: 0.72rem;
+        color: var(--muted);
+        line-height: 1.3;
+      }
+
+      .addon-tile-mark {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 0.7rem;
+        color: transparent;
+        transition: all 0.15s;
+      }
+
+      .addon-tile:has(input:checked) .addon-tile-mark {
+        border-color: var(--vz-blue);
+        background: var(--vz-blue);
+        color: #fff;
+      }
+
+      .addon-tile.restaurant:has(input:checked) .addon-tile-mark {
+        border-color: #d97706;
+        background: #d97706;
+      }
+
+      .addon-tile.delivery:has(input:checked) .addon-tile-mark {
+        border-color: #0891b2;
+        background: #0891b2;
+      }
+
+      .addon-tiles-compact {
+        grid-template-columns: 1fr;
+        min-width: 140px;
+      }
+
+      .toggle-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 2px solid var(--line);
+        border-radius: 999px;
+        background: #fff;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748b;
+        margin: 0;
+        text-transform: none;
+      }
+
+      .toggle-pill:has(input:checked) {
+        border-color: var(--vz-red);
+        background: #fef2f2;
+        color: #b91c1c;
+      }
+
+      .toggle-pill input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
       /* —— App shell —— */
       #app {
         display: none;
         max-width: 1100px;
         margin: 0 auto;
         padding: 0 24px 32px;
+        min-height: 100vh;
+        background: linear-gradient(180deg, #f8fafc 0%, #e8eef5 100%);
       }
 
       .app-header {
@@ -414,22 +702,32 @@
         color: #5b21b6;
       }
 
-      .addon-pick {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 12px;
+      .addon-tag.restaurant {
+        background: #fef3c7;
+        color: #b45309;
       }
 
-      .addon-pick label.chk {
+      .addon-tag.delivery {
+        background: #cffafe;
+        color: #0e7490;
+      }
+
+      .section-label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #64748b;
+        margin-bottom: 8px;
+      }
+
+      .card-actions {
         display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
         align-items: center;
-        gap: 6px;
-        text-transform: none;
-        font-size: 0.85rem;
-        font-weight: 500;
-        color: #3f3f46;
-        margin: 0;
+        margin-top: 4px;
       }
 
       tr.row-expired td {
@@ -454,28 +752,87 @@
       .btn-logout:hover {
         background: #f8fafc;
       }
+
+      .storage-warn {
+        margin-bottom: 16px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 0.82rem;
+        line-height: 1.45;
+        text-align: left;
+        border: 1px solid #fecaca;
+        background: #fef2f2;
+        color: #991b1b;
+      }
+
+      .storage-warn strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .storage-ok {
+        margin-bottom: 16px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 0.78rem;
+        text-align: left;
+        border: 1px solid #a7f3d0;
+        background: #ecfdf5;
+        color: #065f46;
+      }
+
+      .backup-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .backup-row input[type="file"] {
+        font-size: 0.78rem;
+        max-width: 100%;
+      }
     </style>
   </head>
   <body>
     <section id="loginScreen" class="login-screen" aria-label="Inicio de sesión">
       <div class="login-bg" aria-hidden="true"></div>
-      <div class="login-card">
-        <div class="login-logo-wrap">
-          <img src="/assets/ventech-logo.svg" width="120" height="120" alt="VenTECH" />
-        </div>
+      <div class="login-shell">
+        <aside class="login-hero">
+          <img class="login-hero-logo" src="/assets/ventech-logo.svg" width="88" height="88" alt="" />
+          <h2>VENTECH</h2>
+          <p>Licencias centralizadas para MiniMarket POS. Controle cajas, módulos y vencimientos desde un solo lugar.</p>
+          <div class="login-hero-stripes" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <ul class="login-features">
+            <li>Restaurante y Delivery por licencia</li>
+            <li>Renovación +6 meses o +1 año</li>
+            <li>Respaldo JSON antes de cada deploy</li>
+          </ul>
+        </aside>
+        <div class="login-card">
+          <div class="login-logo-wrap">
+            <img src="/assets/ventech-logo.svg" width="96" height="96" alt="VenTECH" />
+          </div>
         <h1 class="brand-name">VENTECH</h1>
         <p class="brand-tagline">Venezuela · Tecnología</p>
-        <p class="login-sub">Panel de licencias MiniMarket POS<br />Add-ons · Renovaciones · Control de equipos</p>
+        <p class="login-sub">Inicie sesión en el panel de licencias</p>
+
+        <div id="loginStorageWarn" class="storage-warn" style="display: none"></div>
 
         <div id="loginMsg" class="msg"></div>
         <label for="adminKey">Clave de administrador</label>
-        <input
-          id="adminKey"
-          type="password"
-          autocomplete="off"
-          placeholder="ADMIN_API_KEY"
-          aria-describedby="keyHint"
-        />
+        <div class="field-wrap">
+          <span class="field-icon" aria-hidden="true">🔐</span>
+          <input
+            id="adminKey"
+            type="password"
+            autocomplete="off"
+            placeholder="ADMIN_API_KEY"
+            aria-describedby="keyHint"
+          />
+        </div>
         <p id="keyHint" style="margin: -8px 0 16px; font-size: 0.72rem; color: #94a3b8; text-align: left">
           Variable <span class="mono">ADMIN_API_KEY</span> en Railway
         </p>
@@ -485,6 +842,7 @@
           © VenTECH
           <span class="mono" id="apiBaseLogin"></span>
         </p>
+        </div>
       </div>
     </section>
 
@@ -503,6 +861,25 @@
         </div>
       </header>
 
+      <div id="appStorageWarn" class="storage-warn" style="display: none"></div>
+      <div id="appStorageOk" class="storage-ok" style="display: none"></div>
+
+      <div class="card">
+        <h2>Respaldo de licencias</h2>
+        <p style="margin: 0 0 12px; font-size: 0.85rem; color: #64748b">
+          Descargue un JSON antes de cada deploy. Si Railway borra la base, restáurelo aquí.
+        </p>
+        <div class="backup-row">
+          <button type="button" class="btn-primary" id="exportBackupBtn">Descargar respaldo</button>
+          <input type="file" id="importBackupFile" accept="application/json,.json" />
+          <button type="button" class="btn-ghost" id="importBackupBtn">Restaurar</button>
+          <label class="toggle-pill">
+            <input type="checkbox" id="importReplace" />
+            Reemplazar todas las licencias
+          </label>
+        </div>
+      </div>
+
       <div class="card">
         <h2>Nueva licencia</h2>
         <div id="msg" class="msg"></div>
@@ -520,8 +897,8 @@
             <input id="expiresDate" type="date" />
           </div>
         </div>
-        <label>Add-ons incluidos</label>
-        <div class="addon-pick" id="createAddons"></div>
+        <span class="section-label">Módulos incluidos</span>
+        <div class="addon-tiles" id="createAddons" role="group" aria-label="Add-ons"></div>
         <button type="button" class="btn-primary" id="createBtn">Crear licencia</button>
         <p id="createdKey" class="mono" style="margin-top: 12px; color: #047857"></p>
       </div>
@@ -555,8 +932,18 @@
         const KEY_STORAGE = "license_admin_key_v5";
         const API = window.location.origin.replace(/\/$/, "");
         const ADDON_CODES = [
-          { code: "restaurant", label: "Restaurante" },
-          { code: "delivery", label: "Delivery" },
+          {
+            code: "restaurant",
+            label: "Restaurante",
+            desc: "Mesas, cocina y KDS",
+            icon: "🍽️",
+          },
+          {
+            code: "delivery",
+            label: "Delivery",
+            desc: "Pedidos a domicilio",
+            icon: "🛵",
+          },
         ];
 
         const loginScreen = document.getElementById("loginScreen");
@@ -658,30 +1045,51 @@
               const label = ADDON_CODES.find(function (a) {
                 return a.code === c;
               });
-              return '<span class="addon-tag">' + escapeHtml(label ? label.label : c) + "</span>";
+              return (
+                '<span class="addon-tag ' +
+                escapeHtml(c) +
+                '">' +
+                escapeHtml(label ? label.label : c) +
+                "</span>"
+              );
             })
             .join("");
         }
 
-        function renderAddonCheckboxes(container, prefix, selected) {
+        function renderAddonTiles(container, prefix, selected, compact) {
           const sel = new Set(selected || []);
+          container.className = "addon-tiles" + (compact ? " addon-tiles-compact" : "");
           container.innerHTML = ADDON_CODES.map(function (a) {
             const id = prefix + "-" + a.code;
+            const on = sel.has(a.code);
             return (
-              '<label class="chk"><input type="checkbox" id="' +
+              '<label class="addon-tile ' +
+              a.code +
+              '" for="' +
+              id +
+              '">' +
+              '<input type="checkbox" class="sr-only" id="' +
               id +
               '" data-code="' +
               a.code +
               '"' +
-              (sel.has(a.code) ? " checked" : "") +
-              " /> " +
+              (on ? " checked" : "") +
+              " />" +
+              '<span class="addon-tile-icon" aria-hidden="true">' +
+              a.icon +
+              "</span>" +
+              '<span class="addon-tile-body"><strong>' +
               escapeHtml(a.label) +
+              "</strong><small>" +
+              escapeHtml(a.desc) +
+              "</small></span>" +
+              '<span class="addon-tile-mark" aria-hidden="true">✓</span>' +
               "</label>"
             );
           }).join("");
         }
 
-        function readAddonCheckboxes(container) {
+        function readAddonTiles(container) {
           const out = [];
           container.querySelectorAll('input[type="checkbox"][data-code]:checked').forEach(function (el) {
             out.push(el.getAttribute("data-code"));
@@ -696,7 +1104,7 @@
         }
 
         async function saveAddons(id, container) {
-          const addons = readAddonCheckboxes(container);
+          const addons = readAddonTiles(container);
           const { res, data } = await fetchJson("/admin/licenses/" + id + "/addons", {
             method: "PUT",
             headers: authHeaders(),
@@ -782,7 +1190,7 @@
 
               tbody.appendChild(tr);
               const addonBox = document.getElementById(addonCellId);
-              renderAddonCheckboxes(addonBox, "row-" + row.id, row.addons || []);
+              renderAddonTiles(addonBox, "row-" + row.id, row.addons || [], true);
             }
 
             tbody.querySelectorAll("[data-renew6]").forEach(function (btn) {
@@ -854,7 +1262,7 @@
           }
         }
 
-        renderAddonCheckboxes(document.getElementById("createAddons"), "new", []);
+        renderAddonTiles(document.getElementById("createAddons"), "new", [], false);
 
         document.getElementById("saveKeyBtn").onclick = function () {
           const k = document.getElementById("adminKey").value.trim();
@@ -890,7 +1298,7 @@
             return;
           }
           try {
-            const addons = readAddonCheckboxes(document.getElementById("createAddons"));
+            const addons = readAddonTiles(document.getElementById("createAddons"));
             const { res, data } = await fetchJson("/admin/licenses", {
               method: "POST",
               headers: authHeaders(),
@@ -914,6 +1322,107 @@
             showMsg(e.message || String(e), false);
           }
         };
+
+        let storageInfo = null;
+
+        function applyStorageUi(info) {
+          storageInfo = info;
+          const loginWarn = document.getElementById("loginStorageWarn");
+          const appWarn = document.getElementById("appStorageWarn");
+          const appOk = document.getElementById("appStorageOk");
+          if (!info || info.persistent) {
+            if (loginWarn) loginWarn.style.display = "none";
+            if (appWarn) appWarn.style.display = "none";
+            if (appOk && info) {
+              appOk.style.display = "block";
+              appOk.textContent =
+                "Almacenamiento persistente · " +
+                info.licenseCount +
+                " licencia(s) · " +
+                (info.dbPath || "");
+            } else if (appOk) appOk.style.display = "none";
+            return;
+          }
+          const html =
+            "<strong>⚠ Las licencias se borran en cada deploy</strong>" +
+            (info.warning || "") +
+            " Railway → su servicio → <b>Volumes</b> → montar en <code>/data</code> → redeploy. " +
+            "Luego use <b>Descargar respaldo</b> antes de futuros cambios.";
+          if (loginWarn) {
+            loginWarn.style.display = "block";
+            loginWarn.innerHTML = html;
+          }
+          if (appWarn) {
+            appWarn.style.display = "block";
+            appWarn.innerHTML = html;
+          }
+          if (appOk) appOk.style.display = "none";
+        }
+
+        async function refreshStorageStatus() {
+          try {
+            const { res, data } = await fetchJson("/health");
+            if (res.ok && data.storage) {
+              applyStorageUi({
+                persistent: data.storage.persistent,
+                warning: data.storage.warning,
+                dbPath: data.storage.dbPath,
+                licenseCount: data.storage.licenseCount,
+              });
+            }
+          } catch {
+            /* ignore */
+          }
+        }
+
+        document.getElementById("exportBackupBtn").onclick = async function () {
+          try {
+            const { res, data } = await fetchJson("/admin/backup/export", { headers: authHeaders() });
+            if (!res.ok) throw new Error(data.error || res.statusText);
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "ventech-licencias-" + new Date().toISOString().slice(0, 10) + ".json";
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showMsg("Respaldo descargado (" + (data.licenses || []).length + " licencias).", true);
+          } catch (e) {
+            showMsg(e.message || String(e), false);
+          }
+        };
+
+        document.getElementById("importBackupBtn").onclick = async function () {
+          const fileInput = document.getElementById("importBackupFile");
+          const file = fileInput.files && fileInput.files[0];
+          if (!file) {
+            showMsg("Seleccione un archivo JSON de respaldo.", false);
+            return;
+          }
+          const replace = document.getElementById("importReplace").checked;
+          if (replace && !confirm("¿Reemplazar TODAS las licencias con el respaldo?")) return;
+          try {
+            const text = await file.text();
+            const payload = JSON.parse(text);
+            const licenses = payload.licenses || payload;
+            if (!Array.isArray(licenses) || licenses.length === 0) {
+              throw new Error("JSON sin licencias");
+            }
+            const { res, data } = await fetchJson("/admin/backup/import", {
+              method: "POST",
+              headers: authHeaders(),
+              body: JSON.stringify({ licenses: licenses, replace: replace }),
+            });
+            if (!res.ok) throw new Error(data.error || res.statusText);
+            showMsg("Restauradas " + data.imported + " licencia(s).", true);
+            fileInput.value = "";
+            await load();
+            await refreshStorageStatus();
+          } catch (e) {
+            showMsg(e.message || String(e), false);
+          }
+        };
+
+        void refreshStorageStatus();
 
         if (getKey()) {
           showApp(true);

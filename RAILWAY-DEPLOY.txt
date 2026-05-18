@@ -22,21 +22,26 @@ STEP 2 — Redeploy
 Deployments → Redeploy (latest commit from license-server repo)
 Wait for SUCCESS.
 
-STEP 3 — PERSIST LICENSES (required — or they vanish on every deploy)
----------------------------------------------------------------------
-Railway replaces the container on each deploy. SQLite in ./data/ is NOT kept.
+STEP 3 — PERSIST LICENSES (required — UI updates = redeploy = data wipe without this)
+------------------------------------------------------------------------------------
+WHY licenses disappear: Railway destroys the container disk on EVERY deploy.
+Pushing UI changes triggers a new deploy → new empty disk → empty licenses.db.
+This is NOT a bug in the panel code.
 
-1. Railway → your license-server service → Volumes → Add Volume
-2. Mount path: /data
-3. Redeploy once (Railway sets RAILWAY_VOLUME_MOUNT_PATH=/data automatically)
-4. In Deploy logs you should see:
-     [license-db] /data/licenses.db
+FIX (one-time):
+1. Railway → license-server service → Volumes → Add Volume
+2. Mount path: /data  (must be exactly /data)
+3. Redeploy once (Railway sets RAILWAY_VOLUME_MOUNT_PATH=/data)
+4. Deploy logs MUST show:
+     [license-db] /data/licenses.db (... persistent=true)
      [license-db] Persistent volume: /data
 
 Optional variable (only if mount path is not /data):
   DATABASE_PATH=/data/licenses.db
 
-After the volume exists, re-register machines ONCE. Future deploys keep the DB.
+5. Re-register machines ONCE (or use panel → Descargar respaldo / Restaurar if you have a JSON backup)
+
+BEFORE each deploy until volume exists: VenTECH panel → Descargar respaldo (JSON).
 
 STEP 4 — Verify
 ---------------

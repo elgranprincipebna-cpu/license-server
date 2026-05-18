@@ -4,9 +4,45 @@ import { fileURLToPath } from "node:url";
 import initSqlJs, { type SqlDatabase } from "sql.js";
 
 const SERVER_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const defaultPath = process.env.RAILWAY_VOLUME_MOUNT_PATH
-  ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH, "licenses.db")
-  : path.join(SERVER_ROOT, "data", "licenses.db");
+
+function isRailwayRuntime(): boolean {
+  return Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID);
+}
+
+/** Default SQLite path: volume on Railway, local ./data otherwise. */
+export function resolveDefaultDbPath(): string {
+  if (process.env.DATABASE_PATH?.trim()) {
+    return process.env.DATABASE_PATH.trim();
+  }
+  const volume = process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
+  if (volume) {
+    return path.join(volume, "licenses.db");
+  }
+  if (isRailwayRuntime()) {
+    return "/data/licenses.db";
+  }
+  return path.join(SERVER_ROOT, "data", "licenses.db");
+}
+
+export type LicenseDbMeta = {
+  dbPath: string;
+  /** True when DB file is on a Railway Volume (survives redeploy). */
+  persistent: boolean;
+  licenseCount: number;
+};
+
+export function isPersistentDbPath(dbPath: string): boolean {
+  const volume = process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
+  if (volume) {
+    const resolved = path.resolve(dbPath);
+    const volRoot = path.resolve(volume);
+    return resolved === volRoot || resolved.startsWith(volRoot + path.sep);
+  }
+  if (isRailwayRuntime()) {
+    return false;
+  }
+  return true;
+}
 
 export type LicenseDb = {
   prepare(sql: string): {
@@ -91,7 +127,10 @@ function findWasm(): string {
   throw new Error("sql-wasm.wasm not found. Run npm install from repo root.");
 }
 
-export async function openLicenseDb(dbPath = process.env.DATABASE_PATH ?? defaultPath): Promise<LicenseDb> {
+export async function openLicenseDb(dbPath = resolveDefaultDbPath()): Promise<{
+  db: LicenseDb;
+  meta: LicenseDbMeta;
+}> {
   const resolved = path.isAbsolute(dbPath) ? dbPath : path.join(SERVER_ROOT, dbPath);
   const wasmBinary = fs.readFileSync(findWasm());
   const SQL = await initSqlJs({ wasmBinary });
@@ -119,18 +158,21 @@ export async function openLicenseDb(dbPath = process.env.DATABASE_PATH ?? defaul
     CREATE INDEX IF NOT EXISTS idx_license_addons_code ON license_addons(addon_code);
   `);
 
-  console.log(`[license-db] ${resolved}`);
+  const countRow = db.prepare(`SELECT COUNT(*) AS n FROM licenses`).get() as { n: number } | undefined;
+  const licenseCount = Number(countRow?.n ?? 0);
+  const persistent = isPersistentDbPath(resolved);
+  const meta: LicenseDbMeta = { dbPath: resolved, persistent, licenseCount };
 
-  const onRailway = Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID);
-  const hasVolume = Boolean(process.env.RAILWAY_VOLUME_MOUNT_PATH);
-  if (onRailway && !hasVolume) {
-    console.warn(
-      "[license-db] WARNING: No Railway Volume detected. licenses.db lives on ephemeral disk — " +
-        "every redeploy wipes all licenses. Add a Volume in Railway (see RAILWAY-DEPLOY.txt)."
+  console.log(`[license-db] ${resolved} (${licenseCount} license(s), persistent=${persistent})`);
+
+  if (isRailwayRuntime() && !persistent) {
+    console.error(
+      "[license-db] *** DATA LOSS RISK *** No Railway Volume. Every deploy/UI update wipes licenses.db. " +
+        "Railway → service → Volumes → mount path /data → redeploy. See RAILWAY-DEPLOY.txt"
     );
-  } else if (onRailway && hasVolume) {
+  } else if (persistent && process.env.RAILWAY_VOLUME_MOUNT_PATH) {
     console.log(`[license-db] Persistent volume: ${process.env.RAILWAY_VOLUME_MOUNT_PATH}`);
   }
 
-  return db;
+  return { db, meta };
 }

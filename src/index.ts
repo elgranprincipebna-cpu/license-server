@@ -26,8 +26,8 @@ app.use(
 const publicDir = resolvePublicDir();
 const indexHtml = path.join(publicDir, "index.html");
 
-const db = await openLicenseDb();
-app.use(createRoutes(db, PANEL_VERSION));
+const { db, meta: dbMeta } = await openLicenseDb();
+app.use(createRoutes(db, PANEL_VERSION, dbMeta));
 
 app.use(
   express.static(publicDir, {

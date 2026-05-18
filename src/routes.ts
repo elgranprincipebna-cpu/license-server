@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import type { LicenseDb } from "./db.js";
+import type { LicenseDb, LicenseDbMeta } from "./db.js";
 import {
   endOfDayIso,
   isValidAddonCode,
@@ -39,6 +39,19 @@ const renewBody = z.object({
 
 const addonsBody = z.object({
   addons: z.array(z.string()),
+});
+
+const importLicenseRow = z.object({
+  machine_id: z.string().min(8).max(512),
+  license_key: z.string().min(4).max(128),
+  label: z.string().max(200).nullable().optional(),
+  expires_at: z.string().min(4),
+  addons: z.array(z.string()).optional(),
+});
+
+const importBody = z.object({
+  replace: z.boolean().optional(),
+  licenses: z.array(importLicenseRow).min(1),
 });
 
 function licenseRowByMachine(
@@ -82,11 +95,26 @@ function checkNotExpired(expiresAt: string): boolean {
   return !Number.isNaN(expiresMs) && expiresMs >= Date.now();
 }
 
-export function createRoutes(db: LicenseDb, panelVersion = 1) {
+export function createRoutes(db: LicenseDb, panelVersion = 1, dbMeta?: LicenseDbMeta) {
   const r = Router();
 
   r.get("/health", (_req, res) => {
-    res.json({ ok: true, service: "minimarket-license-server", panelVersion });
+    const countRow = db.prepare(`SELECT COUNT(*) AS n FROM licenses`).get() as { n: number } | undefined;
+    const licenseCount = Number(countRow?.n ?? 0);
+    const persistent = dbMeta?.persistent ?? true;
+    res.json({
+      ok: true,
+      service: "minimarket-license-server",
+      panelVersion,
+      storage: {
+        persistent,
+        dbPath: dbMeta?.dbPath ?? null,
+        licenseCount,
+        warning: persistent
+          ? null
+          : "Licencias en disco efímero: cada deploy las borra. Monte un Volume en Railway en /data.",
+      },
+    });
   });
 
   r.get("/admin/addons/catalog", requireAdmin, (_req, res) => {
@@ -245,6 +273,76 @@ export function createRoutes(db: LicenseDb, panelVersion = 1) {
     const info = db.prepare(`DELETE FROM licenses WHERE id = ?`).run(req.params.id);
     if (info.changes === 0) return res.status(404).json({ error: "Not found" });
     res.status(204).send();
+  });
+
+  r.get("/admin/backup/export", requireAdmin, (_req, res) => {
+    const rows = db
+      .prepare(
+        `SELECT id, machine_id, license_key, label, expires_at, created_at FROM licenses ORDER BY machine_id`
+      )
+      .all();
+    res.json({
+      exportedAt: new Date().toISOString(),
+      panelVersion,
+      licenses: rows.map((row) => rowToLicenseJson(db, row)),
+    });
+  });
+
+  r.post("/admin/backup/import", requireAdmin, (req, res) => {
+    const parsed = importBody.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: "Invalid backup payload" });
+
+    const replace = parsed.data.replace === true;
+    let imported = 0;
+
+    try {
+      db.transaction((tx) => {
+        if (replace) {
+          tx.exec(`DELETE FROM license_addons`);
+          tx.exec(`DELETE FROM licenses`);
+        }
+        const findByMachine = tx.prepare(`SELECT id FROM licenses WHERE machine_id = ?`);
+        const ins = tx.prepare(
+          `INSERT INTO licenses (id, machine_id, license_key, label, expires_at) VALUES (?, ?, ?, ?, ?)`
+        );
+        const upd = tx.prepare(
+          `UPDATE licenses SET license_key = ?, label = ?, expires_at = ? WHERE id = ?`
+        );
+
+        for (const row of parsed.data.licenses) {
+          if (Number.isNaN(new Date(row.expires_at).getTime())) {
+            throw new Error(`Fecha inválida: ${row.machine_id}`);
+          }
+          const addons = normalizeAddonList(row.addons);
+          for (const code of addons) {
+            if (!isValidAddonCode(code)) {
+              throw new Error(`Addon desconocido: ${code}`);
+            }
+          }
+
+          const existing = findByMachine.get(row.machine_id) as { id: string } | undefined;
+          if (existing && !replace) {
+            upd.run(row.license_key, row.label ?? null, row.expires_at, existing.id);
+            setLicenseAddons(tx, existing.id, addons);
+            imported++;
+            continue;
+          }
+
+          const id = nanoid();
+          ins.run(id, row.machine_id, row.license_key, row.label ?? null, row.expires_at);
+          if (addons.length > 0) setLicenseAddons(tx, id, addons);
+          imported++;
+        }
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "import failed";
+      if (/UNIQUE constraint failed/i.test(msg)) {
+        return res.status(409).json({ error: "machine_id o license_key duplicado en el respaldo" });
+      }
+      return res.status(400).json({ error: msg });
+    }
+
+    res.json({ ok: true, imported, replace });
   });
 
   return r;
