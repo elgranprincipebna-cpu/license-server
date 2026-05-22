@@ -39,7 +39,12 @@ FIX (one-time):
 Optional variable (only if mount path is not /data):
   DATABASE_PATH=/data/licenses.db
 
-5. Re-register machines ONCE (or use panel → Descargar respaldo / Restaurar if you have a JSON backup)
+5. Re-register licenses ONCE (or use panel → Descargar respaldo / Restaurar if you have a JSON backup)
+
+AdminPOS (site license — one per store, all cajas):
+  - In POS server/.env set LICENSE_SITE_ID + LICENSE_KEY
+  - In this panel, "Site ID" = same as LICENSE_SITE_ID (e.g. SITE-MI-TIENDA-001)
+  - Do NOT register each cashier PC browser Machine ID for a 2-caja shop
 
 BEFORE each deploy until volume exists: VenTECH panel → Descargar respaldo (JSON).
 

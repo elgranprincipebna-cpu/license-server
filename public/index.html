@@ -885,8 +885,11 @@
         <div id="msg" class="msg"></div>
         <div class="grid grid-2">
           <div>
-            <label>Machine ID</label>
-            <input id="machineId" type="text" placeholder="WEB-…" />
+            <label>Site ID / Machine ID</label>
+            <input id="machineId" type="text" placeholder="SITE-MI-TIENDA-001 o WEB-…" />
+            <p class="hint" style="margin-top:6px;font-size:12px;color:#64748b">
+              AdminPOS tienda: use el mismo valor que <span class="mono">LICENSE_SITE_ID</span> en server/.env (una licencia para todas las cajas).
+            </p>
           </div>
           <div>
             <label>Etiqueta</label>
@@ -913,7 +916,7 @@
             <thead>
               <tr>
                 <th>Etiqueta</th>
-                <th>Machine ID</th>
+                <th>Site / Machine ID</th>
                 <th>Add-ons</th>
                 <th>Vence</th>
                 <th>Estado</th>
