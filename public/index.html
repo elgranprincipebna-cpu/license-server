@@ -899,6 +899,10 @@
             <label>Vence</label>
             <input id="expiresDate" type="date" />
           </div>
+          <div>
+            <label>Cajas POS permitidas</label>
+            <input id="maxPosTerminals" type="number" min="1" max="32" value="1" />
+          </div>
         </div>
         <span class="section-label">Módulos incluidos</span>
         <div class="addon-tiles" id="createAddons" role="group" aria-label="Add-ons"></div>
@@ -917,6 +921,7 @@
               <tr>
                 <th>Etiqueta</th>
                 <th>Site / Machine ID</th>
+                <th>Cajas</th>
                 <th>Add-ons</th>
                 <th>Vence</th>
                 <th>Estado</th>
@@ -1157,6 +1162,11 @@
                 '<td class="mono">' +
                 escapeHtml(row.machine_id) +
                 "</td>" +
+                '<td><input type="number" min="1" max="32" data-terminals="' +
+                escapeHtml(row.id) +
+                '" value="' +
+                String(row.max_pos_terminals != null ? row.max_pos_terminals : 1) +
+                '" style="width:4rem" /></td>' +
                 '<td><div id="' +
                 addonCellId +
                 '"></div></td>' +
@@ -1180,6 +1190,9 @@
                 '<button type="button" class="btn-renew" data-renew12="' +
                 escapeHtml(row.id) +
                 '">+1 año</button>' +
+                '<button type="button" class="btn-ghost" data-saveterminals="' +
+                escapeHtml(row.id) +
+                '">Guardar cajas</button>' +
                 '<button type="button" class="btn-ghost" data-saveaddons="' +
                 escapeHtml(row.id) +
                 '">Guardar add-ons</button>' +
@@ -1214,6 +1227,29 @@
                 try {
                   await renewLicense(id, 12);
                   showMsg("Licencia renovada +1 año.", true);
+                  await load();
+                } catch (e) {
+                  showMsg(e.message || String(e), false);
+                }
+              };
+            });
+            tbody.querySelectorAll("[data-saveterminals]").forEach(function (btn) {
+              btn.onclick = async function () {
+                const id = btn.getAttribute("data-saveterminals");
+                const input = tbody.querySelector('input[data-terminals="' + id + '"]');
+                const n = Number(input && input.value);
+                if (!Number.isFinite(n) || n < 1 || n > 32) {
+                  showMsg("Cajas POS: use un número entre 1 y 32.", false);
+                  return;
+                }
+                try {
+                  const { res: r, data: d } = await fetchJson("/admin/licenses/" + id, {
+                    method: "PATCH",
+                    headers: authHeaders(),
+                    body: JSON.stringify({ maxPosTerminals: Math.floor(n) }),
+                  });
+                  if (!r.ok) throw new Error(d.error || r.statusText);
+                  showMsg("Límite de cajas actualizado.", true);
                   await load();
                 } catch (e) {
                   showMsg(e.message || String(e), false);
@@ -1302,6 +1338,11 @@
           }
           try {
             const addons = readAddonTiles(document.getElementById("createAddons"));
+            const maxT = Number(document.getElementById("maxPosTerminals").value);
+            if (!Number.isFinite(maxT) || maxT < 1 || maxT > 32) {
+              showMsg("Cajas POS: use un número entre 1 y 32.", false);
+              return;
+            }
             const { res, data } = await fetchJson("/admin/licenses", {
               method: "POST",
               headers: authHeaders(),
@@ -1309,6 +1350,7 @@
                 machineId: machineId,
                 label: document.getElementById("label").value.trim() || undefined,
                 expiresAt: toIsoEndOfDay(expiresDate.value),
+                maxPosTerminals: Math.floor(maxT),
                 addons: addons,
               }),
             });

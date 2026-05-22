@@ -18,6 +18,12 @@ export function setLicenseAddons(db: LicenseDb, licenseId: string, addons: Licen
   });
 }
 
+export function maxPosTerminalsFromRow(row: Record<string, unknown>): number {
+  const n = Number(row.max_pos_terminals ?? 1);
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return Math.min(32, Math.floor(n));
+}
+
 export function rowToLicenseJson(db: LicenseDb, row: Record<string, unknown>) {
   const id = String(row.id);
   return {
@@ -27,6 +33,7 @@ export function rowToLicenseJson(db: LicenseDb, row: Record<string, unknown>) {
     label: row.label != null ? String(row.label) : null,
     expires_at: String(row.expires_at),
     created_at: String(row.created_at),
+    max_pos_terminals: maxPosTerminalsFromRow(row),
     addons: getLicenseAddons(db, id),
   };
 }

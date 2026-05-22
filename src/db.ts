@@ -158,6 +158,11 @@ export async function openLicenseDb(dbPath = resolveDefaultDbPath()): Promise<{
     CREATE INDEX IF NOT EXISTS idx_license_addons_code ON license_addons(addon_code);
   `);
 
+  const licenseCols = db.prepare(`PRAGMA table_info(licenses)`).all() as { name: string }[];
+  if (!licenseCols.some((c) => c.name === "max_pos_terminals")) {
+    db.exec(`ALTER TABLE licenses ADD COLUMN max_pos_terminals INTEGER NOT NULL DEFAULT 1`);
+  }
+
   const countRow = db.prepare(`SELECT COUNT(*) AS n FROM licenses`).get() as { n: number } | undefined;
   const licenseCount = Number(countRow?.n ?? 0);
   const persistent = isPersistentDbPath(resolved);

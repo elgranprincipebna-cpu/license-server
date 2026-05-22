@@ -10,7 +10,20 @@ import {
   renewExpiresAtIso,
 } from "./addons.js";
 import { requireAdmin } from "./middleware/adminAuth.js";
-import { getLicenseAddons, rowToLicenseJson, setLicenseAddons } from "./licenseRepo.js";
+import {
+  getLicenseAddons,
+  maxPosTerminalsFromRow,
+  rowToLicenseJson,
+  setLicenseAddons,
+} from "./licenseRepo.js";
+
+const maxPosTerminalsField = z
+  .number()
+  .int()
+  .min(1)
+  .max(32)
+  .optional()
+  .default(1);
 
 const verifyBody = z.object({
   machineId: z.preprocess((v) => String(v ?? "").trim(), z.string().min(8).max(512)),
@@ -25,12 +38,14 @@ const createBody = z.object({
   label: z.string().max(200).optional(),
   expiresAt: z.preprocess((v) => String(v ?? "").trim(), z.string().min(4)),
   addons: z.array(z.string()).optional(),
+  maxPosTerminals: maxPosTerminalsField,
 });
 
 const extendBody = z.object({
   expiresAt: z.preprocess((v) => String(v ?? "").trim(), z.string().min(4)).optional(),
   label: z.string().max(200).optional(),
   addons: z.array(z.string()).optional(),
+  maxPosTerminals: maxPosTerminalsField.optional(),
 });
 
 const renewBody = z.object({
@@ -47,6 +62,7 @@ const importLicenseRow = z.object({
   label: z.string().max(200).nullable().optional(),
   expires_at: z.string().min(4),
   addons: z.array(z.string()).optional(),
+  max_pos_terminals: z.number().int().min(1).max(32).optional(),
 });
 
 const importBody = z.object({
@@ -58,11 +74,11 @@ function licenseRowByMachine(
   db: LicenseDb,
   machineId: string,
   licenseKey?: string
-): { id: string; machine_id: string; license_key: string; expires_at: string } | "mismatch" | null {
+): { id: string; machine_id: string; license_key: string; expires_at: string; max_pos_terminals: number } | "mismatch" | null {
   if (licenseKey) {
     const row = db
       .prepare(
-        `SELECT id, machine_id, license_key, expires_at FROM licenses WHERE machine_id = ? AND license_key = ?`
+        `SELECT id, machine_id, license_key, expires_at, max_pos_terminals FROM licenses WHERE machine_id = ? AND license_key = ?`
       )
       .get(machineId, licenseKey) as Record<string, unknown> | undefined;
     if (row) {
@@ -71,6 +87,7 @@ function licenseRowByMachine(
         machine_id: String(row.machine_id),
         license_key: String(row.license_key),
         expires_at: String(row.expires_at),
+        max_pos_terminals: maxPosTerminalsFromRow(row),
       };
     }
     const byMachine = db
@@ -79,7 +96,7 @@ function licenseRowByMachine(
     return byMachine ? "mismatch" : null;
   }
   const row = db
-    .prepare(`SELECT id, machine_id, license_key, expires_at FROM licenses WHERE machine_id = ?`)
+    .prepare(`SELECT id, machine_id, license_key, expires_at, max_pos_terminals FROM licenses WHERE machine_id = ?`)
     .get(machineId) as Record<string, unknown> | undefined;
   if (!row) return null;
   return {
@@ -87,6 +104,7 @@ function licenseRowByMachine(
     machine_id: String(row.machine_id),
     license_key: String(row.license_key),
     expires_at: String(row.expires_at),
+    max_pos_terminals: maxPosTerminalsFromRow(row),
   };
 }
 
@@ -160,6 +178,7 @@ export function createRoutes(db: LicenseDb, panelVersion = 1, dbMeta?: LicenseDb
       valid: true,
       machineId: found.machine_id,
       expiresAt: found.expires_at,
+      maxPosTerminals: found.max_pos_terminals,
       addons: getLicenseAddons(db, found.id),
     });
   });
@@ -176,7 +195,7 @@ export function createRoutes(db: LicenseDb, panelVersion = 1, dbMeta?: LicenseDb
   r.post("/admin/licenses", requireAdmin, (req, res) => {
     const parsed = createBody.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "Invalid body" });
-    const { machineId, label, expiresAt } = parsed.data;
+    const { machineId, label, expiresAt, maxPosTerminals } = parsed.data;
     if (Number.isNaN(new Date(expiresAt).getTime())) {
       return res.status(400).json({ error: "expiresAt must be a valid date" });
     }
@@ -186,8 +205,8 @@ export function createRoutes(db: LicenseDb, panelVersion = 1, dbMeta?: LicenseDb
     try {
       db.transaction((tx) => {
         tx.prepare(
-          `INSERT INTO licenses (id, machine_id, license_key, label, expires_at) VALUES (?, ?, ?, ?, ?)`
-        ).run(id, machineId, licenseKey, label ?? null, expiresAt);
+          `INSERT INTO licenses (id, machine_id, license_key, label, expires_at, max_pos_terminals) VALUES (?, ?, ?, ?, ?, ?)`
+        ).run(id, machineId, licenseKey, label ?? null, expiresAt, maxPosTerminals);
         if (addons.length > 0) setLicenseAddons(tx, id, addons);
       });
     } catch (e) {
@@ -203,6 +222,7 @@ export function createRoutes(db: LicenseDb, panelVersion = 1, dbMeta?: LicenseDb
       licenseKey,
       label: label ?? null,
       expiresAt,
+      maxPosTerminals,
       addons,
     });
   });
@@ -253,10 +273,15 @@ export function createRoutes(db: LicenseDb, panelVersion = 1, dbMeta?: LicenseDb
     }
     const label =
       parsed.data.label !== undefined ? parsed.data.label : (existing.label as string | null);
+    const maxPosTerminals =
+      parsed.data.maxPosTerminals !== undefined
+        ? parsed.data.maxPosTerminals
+        : maxPosTerminalsFromRow(existing);
 
-    db.prepare(`UPDATE licenses SET expires_at = ?, label = ? WHERE id = ?`).run(
+    db.prepare(`UPDATE licenses SET expires_at = ?, label = ?, max_pos_terminals = ? WHERE id = ?`).run(
       expiresAt,
       label,
+      maxPosTerminals,
       req.params.id
     );
 
@@ -303,10 +328,10 @@ export function createRoutes(db: LicenseDb, panelVersion = 1, dbMeta?: LicenseDb
         }
         const findByMachine = tx.prepare(`SELECT id FROM licenses WHERE machine_id = ?`);
         const ins = tx.prepare(
-          `INSERT INTO licenses (id, machine_id, license_key, label, expires_at) VALUES (?, ?, ?, ?, ?)`
+          `INSERT INTO licenses (id, machine_id, license_key, label, expires_at, max_pos_terminals) VALUES (?, ?, ?, ?, ?, ?)`
         );
         const upd = tx.prepare(
-          `UPDATE licenses SET license_key = ?, label = ?, expires_at = ? WHERE id = ?`
+          `UPDATE licenses SET license_key = ?, label = ?, expires_at = ?, max_pos_terminals = ? WHERE id = ?`
         );
 
         for (const row of parsed.data.licenses) {
@@ -320,16 +345,18 @@ export function createRoutes(db: LicenseDb, panelVersion = 1, dbMeta?: LicenseDb
             }
           }
 
+          const maxTerminals = Math.min(32, Math.max(1, Number(row.max_pos_terminals ?? 1)));
+
           const existing = findByMachine.get(row.machine_id) as { id: string } | undefined;
           if (existing && !replace) {
-            upd.run(row.license_key, row.label ?? null, row.expires_at, existing.id);
+            upd.run(row.license_key, row.label ?? null, row.expires_at, maxTerminals, existing.id);
             setLicenseAddons(tx, existing.id, addons);
             imported++;
             continue;
           }
 
           const id = nanoid();
-          ins.run(id, row.machine_id, row.license_key, row.label ?? null, row.expires_at);
+          ins.run(id, row.machine_id, row.license_key, row.label ?? null, row.expires_at, maxTerminals);
           if (addons.length > 0) setLicenseAddons(tx, id, addons);
           imported++;
         }
